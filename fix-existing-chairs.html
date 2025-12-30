@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Chair ClientId Fields</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .info { background: #e3f2fd; border-left: 4px solid #2196f3; }
+        .success { background: #e8f5e8; border-left: 4px solid #4caf50; }
+        .error { background: #ffebee; border-left: 4px solid #f44336; }
+        .warning { background: #fff3e0; border-left: 4px solid #ff9800; }
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #1976d2;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🪑 Fix Chair ClientId Fields</h1>
+        
+        <div class="status info">
+            <strong>Problem:</strong> Chairs created by admin are not showing up for clients because they were saved with 'userId' field instead of 'clientId' field.
+        </div>
+        
+        <div class="status warning">
+            <strong>Solution:</strong> This tool will update all existing chairs to use the correct 'clientId' field.
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="checkChairs()" id="checkBtn">1. Check Chairs</button>
+            <button onclick="fixChairs()" id="fixBtn" disabled>2. Fix Chairs</button>
+            <button onclick="verifyFix()" id="verifyBtn" disabled>3. Verify Fix</button>
+        </div>
+        
+        <div id="status"></div>
+        <div id="log" class="log" style="display: none;"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteField } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration - replace with your config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBqKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", // Replace with your API key
+            authDomain: "chairecaredemo.firebaseapp.com",
+            projectId: "chairecaredemo",
+            storageBucket: "chairecaredemo.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdefghijklmnop"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let chairsToFix = [];
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            logDiv.style.display = 'block';
+            logDiv.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = message;
+        }
+
+        window.checkChairs = async function() {
+            try {
+                document.getElementById('checkBtn').disabled = true;
+                showStatus('🔍 Checking chairs...', 'info');
+                log('Starting chair check...');
+
+                const chairsSnapshot = await getDocs(collection(db, 'chairs'));
+                
+                if (chairsSnapshot.empty) {
+                    showStatus('ℹ️ No chairs found in database.', 'warning');
+                    log('No chairs found');
+                    return;
+                }
+
+                chairsToFix = [];
+                let alreadyCorrect = 0;
+
+                chairsSnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    
+                    if (data.userId && !data.clientId) {
+                        chairsToFix.push({
+                            id: doc.id,
+                            chairNumber: data.chairNumber || 'Unknown',
+                            userId: data.userId
+                        });
+                        log(`Found chair to fix: ${data.chairNumber || doc.id}`);
+                    } else if (data.clientId) {
+                        alreadyCorrect++;
+                    }
+                });
+
+                if (chairsToFix.length === 0) {
+                    showStatus('✅ All chairs already have correct clientId field!', 'success');
+                    log(`All ${alreadyCorrect} chairs are already correct`);
+                } else {
+                    showStatus(`📋 Found ${chairsToFix.length} chairs to fix and ${alreadyCorrect} already correct.`, 'warning');
+                    log(`Found ${chairsToFix.length} chairs that need fixing`);
+                    document.getElementById('fixBtn').disabled = false;
+                }
+
+            } catch (error) {
+                showStatus('❌ Error checking chairs: ' + error.message, 'error');
+                log('Error: ' + error.message);
+            } finally {
+                document.getElementById('checkBtn').disabled = false;
+            }
+        };
+
+        window.fixChairs = async function() {
+            if (chairsToFix.length === 0) {
+                showStatus('⚠️ No chairs to fix. Run check first.', 'warning');
+                return;
+            }
+
+            try {
+                document.getElementById('fixBtn').disabled = true;
+                showStatus(`🔧 Fixing ${chairsToFix.length} chairs...`, 'info');
+                log(`Starting to fix ${chairsToFix.length} chairs...`);
+
+                let fixed = 0;
+                for (const chair of chairsToFix) {
+                    try {
+                        await updateDoc(doc(db, 'chairs', chair.id), {
+                            clientId: chair.userId,
+                            userId: deleteField()
+                        });
+                        
+                        fixed++;
+                        log(`Fixed chair: ${chair.chairNumber} (${chair.id})`);
+                        
+                        // Update progress
+                        showStatus(`🔧 Fixed ${fixed}/${chairsToFix.length} chairs...`, 'info');
+                        
+                    } catch (error) {
+                        log(`Error fixing chair ${chair.chairNumber}: ${error.message}`);
+                    }
+                }
+
+                showStatus(`✅ Successfully fixed ${fixed} chairs!`, 'success');
+                log(`Completed! Fixed ${fixed} out of ${chairsToFix.length} chairs`);
+                document.getElementById('verifyBtn').disabled = false;
+
+            } catch (error) {
+                showStatus('❌ Error fixing chairs: ' + error.message, 'error');
+                log('Error: ' + error.message);
+            } finally {
+                document.getElementById('fixBtn').disabled = false;
+            }
+        };
+
+        window.verifyFix = async function() {
+            try {
+                document.getElementById('verifyBtn').disabled = true;
+                showStatus('🔍 Verifying fix...', 'info');
+                log('Verifying that all chairs now have clientId...');
+
+                const chairsSnapshot = await getDocs(collection(db, 'chairs'));
+                
+                let withClientId = 0;
+                let withUserId = 0;
+                let withNeither = 0;
+
+                chairsSnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    
+                    if (data.clientId && !data.userId) {
+                        withClientId++;
+                    } else if (data.userId && !data.clientId) {
+                        withUserId++;
+                        log(`Still has userId: ${data.chairNumber || doc.id}`);
+                    } else if (!data.clientId && !data.userId) {
+                        withNeither++;
+                        log(`Has neither field: ${data.chairNumber || doc.id}`);
+                    }
+                });
+
+                if (withUserId === 0 && withNeither === 0) {
+                    showStatus(`✅ Perfect! All ${withClientId} chairs now have correct clientId field.`, 'success');
+                    log(`Verification complete: All ${withClientId} chairs are correct`);
+                } else {
+                    showStatus(`⚠️ Verification: ${withClientId} correct, ${withUserId} still need fixing, ${withNeither} missing both fields.`, 'warning');
+                    log(`Verification: ${withClientId} correct, ${withUserId} still with userId, ${withNeither} with neither`);
+                }
+
+            } catch (error) {
+                showStatus('❌ Error verifying: ' + error.message, 'error');
+                log('Verification error: ' + error.message);
+            } finally {
+                document.getElementById('verifyBtn').disabled = false;
+            }
+        };
+
+        // Show initial instructions
+        showStatus('👆 Click "1. Check Chairs" to start the process.', 'info');
+    </script>
+</body>
+</html>

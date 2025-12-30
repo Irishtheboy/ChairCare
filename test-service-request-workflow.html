@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Request Workflow Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Service Request Workflow Test</h1>
+        <p>This tool helps debug the service request workflow by testing each step of the process.</p>
+
+        <div class="test-section">
+            <h3>Step 1: Check Firestore Connection</h3>
+            <p>Verify that we can connect to Firestore and access collections.</p>
+            <button onclick="testFirestoreConnection()">Test Connection</button>
+            <div id="connection-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Step 2: Check Service Requests Collection</h3>
+            <p>Query the serviceLogs collection to see existing service requests.</p>
+            <button onclick="checkServiceRequests()">Check Service Requests</button>
+            <div id="requests-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Step 3: Test Admin Query</h3>
+            <p>Run the exact query that the admin page uses to fetch pending requests.</p>
+            <button onclick="testAdminQuery()">Test Admin Query</button>
+            <div id="admin-query-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Step 4: Create Test Service Request</h3>
+            <p>Create a test service request to verify the submission process.</p>
+            <button onclick="createTestRequest()">Create Test Request</button>
+            <div id="create-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Step 5: Verify Test Request Appears</h3>
+            <p>Check if the test request appears in the admin query results.</p>
+            <button onclick="verifyTestRequest()">Verify Test Request</button>
+            <div id="verify-result" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getFirestore, 
+            collection, 
+            query, 
+            where, 
+            orderBy, 
+            getDocs, 
+            addDoc, 
+            serverTimestamp 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration (using the same config as the app)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBpZmhOJOUKxi-5DzpNbTUe8wWGWJkxfCE",
+            authDomain: "chairecaredemo.firebaseapp.com",
+            projectId: "chairecaredemo",
+            storageBucket: "chairecaredemo.firebasestorage.app",
+            messagingSenderId: "1092527720430",
+            appId: "1:1092527720430:web:a1b2c3d4e5f6g7h8i9j0k1"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Make functions available globally
+        window.testFirestoreConnection = async function() {
+            const resultDiv = document.getElementById('connection-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                // Try to read from a collection
+                const testQuery = query(collection(db, 'serviceLogs'));
+                const snapshot = await getDocs(testQuery);
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ Connection successful! Found ${snapshot.size} documents in serviceLogs collection.`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Connection failed: ${error.message}`;
+            }
+        };
+
+        window.checkServiceRequests = async function() {
+            const resultDiv = document.getElementById('requests-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                const q = query(collection(db, 'serviceLogs'));
+                const snapshot = await getDocs(q);
+                
+                const requests = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    requests.push({
+                        id: doc.id,
+                        status: data.status,
+                        serviceType: data.serviceType,
+                        createdAt: data.createdAt?.toDate?.() || data.createdAt,
+                        clientId: data.clientId,
+                        chairId: data.chairId
+                    });
+                });
+
+                resultDiv.className = 'result info';
+                resultDiv.textContent = `📋 Found ${requests.length} total service requests:\n\n` + 
+                    JSON.stringify(requests, null, 2);
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error checking requests: ${error.message}`;
+            }
+        };
+
+        window.testAdminQuery = async function() {
+            const resultDiv = document.getElementById('admin-query-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                // This is the exact query from the admin page
+                const q = query(
+                    collection(db, 'serviceLogs'),
+                    where('status', '==', 'pending'),
+                    orderBy('createdAt', 'desc')
+                );
+                
+                const snapshot = await getDocs(q);
+                
+                const pendingRequests = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    pendingRequests.push({
+                        id: doc.id,
+                        status: data.status,
+                        serviceType: data.serviceType,
+                        description: data.description,
+                        createdAt: data.createdAt?.toDate?.() || data.createdAt,
+                        clientId: data.clientId,
+                        chairId: data.chairId,
+                        urgency: data.urgency
+                    });
+                });
+
+                resultDiv.className = 'result info';
+                resultDiv.textContent = `🔍 Admin query found ${pendingRequests.length} pending requests:\n\n` + 
+                    JSON.stringify(pendingRequests, null, 2);
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Admin query failed: ${error.message}`;
+            }
+        };
+
+        window.createTestRequest = async function() {
+            const resultDiv = document.getElementById('create-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                const testRequest = {
+                    chairId: 'test-chair-123',
+                    chairNumber: 'TEST-001',
+                    clientId: 'test-client-456',
+                    clientName: 'Test Client',
+                    companyName: 'Test Company',
+                    location: 'Test Office',
+                    serviceType: 'repair',
+                    urgency: 'high',
+                    description: 'Test service request for debugging',
+                    issueDetails: 'This is a test request created by the debug tool',
+                    status: 'pending',
+                    createdAt: serverTimestamp(),
+                    contactEmail: 'test@example.com',
+                    requestedBy: 'Test User',
+                    beforePhotos: [],
+                    afterPhotos: [],
+                    cost: 0
+                };
+
+                const docRef = await addDoc(collection(db, 'serviceLogs'), testRequest);
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ Test request created successfully!\nDocument ID: ${docRef.id}`;
+                
+                // Store the test request ID for verification
+                window.testRequestId = docRef.id;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Failed to create test request: ${error.message}`;
+            }
+        };
+
+        window.verifyTestRequest = async function() {
+            const resultDiv = document.getElementById('verify-result');
+            resultDiv.style.display = 'block';
+            
+            if (!window.testRequestId) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ No test request ID found. Create a test request first.';
+                return;
+            }
+
+            try {
+                // Run the admin query again to see if our test request appears
+                const q = query(
+                    collection(db, 'serviceLogs'),
+                    where('status', '==', 'pending'),
+                    orderBy('createdAt', 'desc')
+                );
+                
+                const snapshot = await getDocs(q);
+                
+                let testRequestFound = false;
+                const allRequests = [];
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    allRequests.push({
+                        id: doc.id,
+                        description: data.description,
+                        createdAt: data.createdAt?.toDate?.() || data.createdAt
+                    });
+                    
+                    if (doc.id === window.testRequestId) {
+                        testRequestFound = true;
+                    }
+                });
+
+                if (testRequestFound) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ SUCCESS! Test request found in admin query results.\n\n` +
+                        `The service request workflow is working correctly!\n\n` +
+                        `All pending requests (${allRequests.length}):\n` +
+                        JSON.stringify(allRequests, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Test request NOT found in admin query results.\n\n` +
+                        `This indicates there's still an issue with the workflow.\n\n` +
+                        `Found ${allRequests.length} other pending requests:\n` +
+                        JSON.stringify(allRequests, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Verification failed: ${error.message}`;
+            }
+        };
+    </script>
+</body>
+</html>
