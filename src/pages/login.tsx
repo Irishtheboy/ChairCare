@@ -315,7 +315,7 @@ const LoginPage: NextPage = () => {
         break;
       case 'client':
         setEmail('client@company.co.za');
-        setPassword('ClientDemo2024!');
+        setPassword('ClientDemo20244444!');
         break;
       case 'technician':
         setEmail('tech@chaircare.co.za');
