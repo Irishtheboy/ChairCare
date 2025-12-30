@@ -465,7 +465,7 @@ const ScanChair: NextPage = () => {
               <ChairDetails>
                 <DetailItem>
                   <DetailLabel>Type</DetailLabel>
-                  <DetailValue>{chair.type}</DetailValue>
+                  <DetailValue>{chair.category?.name || 'Not specified'}</DetailValue>
                 </DetailItem>
                 <DetailItem>
                   <DetailLabel>Model</DetailLabel>
@@ -494,7 +494,7 @@ const ScanChair: NextPage = () => {
                   <HistoryTitle>Recent Service History</HistoryTitle>
                   {chair.serviceHistory.slice(0, 3).map((entry, index) => (
                     <HistoryItem key={index}>
-                      <div><strong>{entry.serviceDate}</strong> - {entry.technicianName}</div>
+                      <div><strong>{entry.serviceDate.toLocaleDateString()}</strong> - {entry.technicianName}</div>
                       <div>{entry.servicesPerformed.join(', ')}</div>
                       <div>{entry.outcome}</div>
                     </HistoryItem>
@@ -502,9 +502,11 @@ const ScanChair: NextPage = () => {
                 </ServiceHistory>
               )}
 
-              <Button variant="outline" size="sm" onClick={() => setChair(null)} style={{ marginTop: theme.spacing.md }}>
-                Scan Different Chair
-              </Button>
+              <div style={{ marginTop: theme.spacing.md }}>
+                <Button variant="outline" size="sm" onClick={() => setChair(null)}>
+                  Scan Different Chair
+                </Button>
+              </div>
             </ChairInfo>
 
             <ServiceForm onSubmit={handleSubmit}>
