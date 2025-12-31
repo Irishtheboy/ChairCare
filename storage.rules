@@ -1,0 +1,36 @@
+rules_version = '2';
+
+// Firebase Storage Security Rules for Chair Care Application
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow authenticated users to upload and read photos
+    match /photos/{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to upload chair-related photos
+    match /chairs/{chairId}/{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to upload job-related photos
+    match /jobs/{jobId}/{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to upload branding/logo files
+    match /branding/{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow debug uploads for testing
+    match /debug/{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

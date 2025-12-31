@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { theme } from 'styles/theme';
+import { useTheme } from 'contexts/ThemeContext';
+import { theme as defaultTheme } from 'styles/theme';
 
 interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'danger' | 'ghost' | 'outline';
@@ -13,15 +14,15 @@ interface ButtonProps {
   type?: 'button' | 'submit' | 'reset';
 }
 
-const StyledButton = styled.button<ButtonProps>`
+const StyledButton = styled.button<ButtonProps & { currentTheme: any }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: ${theme.spacing.sm};
-  font-family: ${theme.typography.fontFamily.sans.join(', ')};
-  font-weight: ${theme.typography.fontWeight.medium};
+  gap: ${defaultTheme.spacing.sm};
+  font-family: ${defaultTheme.typography.fontFamily.sans.join(', ')};
+  font-weight: ${defaultTheme.typography.fontWeight.medium};
   border: none;
-  border-radius: ${theme.borderRadius.lg};
+  border-radius: ${defaultTheme.borderRadius.lg};
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   position: relative;
@@ -33,95 +34,103 @@ const StyledButton = styled.button<ButtonProps>`
     switch (size) {
       case 'sm':
         return `
-          padding: ${theme.spacing.sm} ${theme.spacing.md};
-          font-size: ${theme.typography.fontSize.sm};
+          padding: ${defaultTheme.spacing.sm} ${defaultTheme.spacing.md};
+          font-size: ${defaultTheme.typography.fontSize.sm};
           min-height: 2rem;
         `;
       case 'lg':
         return `
-          padding: ${theme.spacing.md} ${theme.spacing.xl};
-          font-size: ${theme.typography.fontSize.lg};
+          padding: ${defaultTheme.spacing.md} ${defaultTheme.spacing.xl};
+          font-size: ${defaultTheme.typography.fontSize.lg};
           min-height: 3rem;
         `;
       default:
         return `
-          padding: ${theme.spacing.md} ${theme.spacing.lg};
-          font-size: ${theme.typography.fontSize.base};
+          padding: ${defaultTheme.spacing.md} ${defaultTheme.spacing.lg};
+          font-size: ${defaultTheme.typography.fontSize.base};
           min-height: 2.5rem;
         `;
     }
   }}
   
-  ${({ variant = 'primary' }) => {
+  ${({ variant = 'primary', currentTheme }) => {
+    const isDark = currentTheme?.mode === 'dark';
+    
     switch (variant) {
       case 'secondary':
         return `
-          background: ${theme.colors.gray[100]};
-          color: ${theme.colors.gray[700]};
-          border: 1px solid ${theme.colors.gray[300]};
+          background: ${isDark ? defaultTheme.colors.gray[800] : defaultTheme.colors.gray[100]};
+          color: ${isDark ? defaultTheme.colors.gray[200] : defaultTheme.colors.gray[700]};
+          border: 1px solid ${isDark ? defaultTheme.colors.gray[600] : defaultTheme.colors.gray[300]};
           
           &:hover:not(:disabled) {
-            background: ${theme.colors.gray[200]};
-            border-color: ${theme.colors.gray[400]};
+            background: ${isDark ? defaultTheme.colors.gray[700] : defaultTheme.colors.gray[200]};
+            border-color: ${isDark ? defaultTheme.colors.gray[500] : defaultTheme.colors.gray[400]};
           }
         `;
       case 'success':
         return `
-          background: ${theme.colors.success[500]};
-          color: ${theme.colors.text.inverse};
+          background: ${defaultTheme.colors.success[500]};
+          color: white;
           
           &:hover:not(:disabled) {
-            background: ${theme.colors.success[600]};
+            background: ${defaultTheme.colors.success[600]};
           }
         `;
       case 'warning':
         return `
-          background: ${theme.colors.warning[500]};
-          color: ${theme.colors.text.inverse};
+          background: ${defaultTheme.colors.warning[500]};
+          color: white;
           
           &:hover:not(:disabled) {
-            background: ${theme.colors.warning[600]};
+            background: ${defaultTheme.colors.warning[600]};
           }
         `;
       case 'error':
       case 'danger':
         return `
-          background: ${theme.colors.error[500]};
-          color: ${theme.colors.text.inverse};
+          background: ${defaultTheme.colors.error[500]};
+          color: white;
           
           &:hover:not(:disabled) {
-            background: ${theme.colors.error[600]};
+            background: ${defaultTheme.colors.error[600]};
           }
         `;
       case 'ghost':
         return `
           background: transparent;
-          color: ${theme.colors.primary[600]};
+          color: ${isDark ? defaultTheme.colors.primary[400] : defaultTheme.colors.primary[600]};
           
           &:hover:not(:disabled) {
-            background: ${theme.colors.primary[50]};
+            background: ${isDark ? 'rgba(74, 222, 128, 0.1)' : defaultTheme.colors.primary[50]};
           }
         `;
       case 'outline':
         return `
           background: transparent;
-          color: ${theme.colors.primary[600]};
-          border: 1px solid ${theme.colors.primary[300]};
+          color: ${isDark ? defaultTheme.colors.primary[400] : defaultTheme.colors.primary[600]};
+          border: 1px solid ${isDark ? defaultTheme.colors.primary[400] : defaultTheme.colors.primary[300]};
           
           &:hover:not(:disabled) {
-            background: ${theme.colors.primary[50]};
-            border-color: ${theme.colors.primary[400]};
+            background: ${isDark ? 'rgba(74, 222, 128, 0.1)' : defaultTheme.colors.primary[50]};
+            border-color: ${isDark ? defaultTheme.colors.primary[300] : defaultTheme.colors.primary[400]};
           }
         `;
       default:
         return `
-          background: linear-gradient(135deg, ${theme.colors.primary[500]} 0%, ${theme.colors.primary[600]} 100%);
-          color: ${theme.colors.text.inverse};
-          box-shadow: ${theme.shadows.sm};
+          background: ${isDark 
+            ? `linear-gradient(135deg, ${defaultTheme.colors.primary[500]} 0%, ${defaultTheme.colors.primary[600]} 100%)`
+            : `linear-gradient(135deg, ${defaultTheme.colors.primary[600]} 0%, ${defaultTheme.colors.primary[700]} 100%)`
+          };
+          color: white;
+          box-shadow: ${isDark ? defaultTheme.shadows.sm : defaultTheme.shadows.md};
           
           &:hover:not(:disabled) {
-            background: linear-gradient(135deg, ${theme.colors.primary[600]} 0%, ${theme.colors.primary[700]} 100%);
-            box-shadow: ${theme.shadows.md};
+            background: ${isDark
+              ? `linear-gradient(135deg, ${defaultTheme.colors.primary[600]} 0%, ${defaultTheme.colors.primary[700]} 100%)`
+              : `linear-gradient(135deg, ${defaultTheme.colors.primary[700]} 0%, ${defaultTheme.colors.primary[800]} 100%)`
+            };
+            box-shadow: ${isDark ? defaultTheme.shadows.md : defaultTheme.shadows.lg};
             transform: translateY(-1px);
           }
         `;
@@ -160,8 +169,10 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props 
 }) => {
+  const { theme: currentTheme } = useTheme();
+  
   return (
-    <StyledButton {...props} disabled={disabled || loading}>
+    <StyledButton {...props} currentTheme={currentTheme} disabled={disabled || loading}>
       {loading && <LoadingSpinner />}
       {children}
     </StyledButton>

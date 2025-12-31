@@ -10,8 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const usersQuery = query(
       collection(db, 'users'),
-      where('role', '==', 'client'),
-      where('status', '==', 'approved')
+      where('role', '==', 'client')
     );
     const querySnapshot = await getDocs(usersQuery);
     
@@ -24,6 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         name: userData.name,
         role: userData.role,
         companyName: userData.companyName,
+        status: userData.status || 'approved', // Default to approved if no status
         createdAt: userData.createdAt,
         updatedAt: userData.updatedAt
       });

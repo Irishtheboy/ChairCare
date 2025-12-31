@@ -12,9 +12,12 @@ const LayoutContainer = styled.div<{ theme: any }>`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: ${props => props.theme.colors.background.secondary};
+  background: ${props => props.theme.colors.background.primary};
+  background-image: ${props => props.theme.colors.background.pattern};
+  background-size: ${props => props.theme.colors.background.patternSize};
   font-family: ${props => props.theme.typography.fontFamily.sans.join(', ')};
   transition: background-color 0.3s ease;
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const MainWrapper = styled.div<{ theme: any }>`
@@ -24,7 +27,9 @@ const MainWrapper = styled.div<{ theme: any }>`
 
 const Sidebar = styled.aside<{ isOpen: boolean; theme: any }>`
   width: 280px;
-  background: ${props => props.theme.colors.background.primary};
+  background: ${props => props.theme.colors.background.secondary};
+  background-image: ${props => props.theme.colors.background.pattern};
+  background-size: ${props => props.theme.colors.background.patternSize};
   border-right: 1px solid ${props => props.theme.colors.border.primary};
   box-shadow: ${props => props.theme.shadows.lg};
   position: fixed;
@@ -43,21 +48,17 @@ const Sidebar = styled.aside<{ isOpen: boolean; theme: any }>`
 const SidebarHeader = styled.div<{ theme: any }>`
   padding: ${props => props.theme.spacing.xl};
   border-bottom: 1px solid ${props => props.theme.colors.border.primary};
-  background: ${props => props.theme.mode === 'dark' 
-    ? 'linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(3, 105, 161, 0.1) 100%)'
-    : 'linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(3, 105, 161, 0.05) 100%)'
-  };
+  background: ${props => props.theme.gradients.card};
+  backdrop-filter: blur(10px);
 `;
 
 const UserInfo = styled.div<{ theme: any }>`
   margin-top: ${props => props.theme.spacing.md};
   padding: ${props => props.theme.spacing.md};
-  background: ${props => props.theme.mode === 'dark' 
-    ? 'rgba(255, 255, 255, 0.05)' 
-    : 'rgba(0, 0, 0, 0.02)'
-  };
-  border-radius: ${props => props.theme.borderRadius.md};
+  background: ${props => props.theme.colors.background.card};
+  border-radius: ${props => props.theme.borderRadius.lg};
   border: 1px solid ${props => props.theme.colors.border.primary};
+  backdrop-filter: blur(10px);
 `;
 
 const UserName = styled.div<{ theme: any }>`
@@ -99,15 +100,12 @@ const NavItem = styled.button<{ active?: boolean; theme: any }>`
   gap: ${props => props.theme.spacing.md};
   padding: ${props => props.theme.spacing.md} ${props => props.theme.spacing.xl};
   background: ${props => props.active 
-    ? (props.theme.mode === 'dark' 
-      ? 'rgba(14, 165, 233, 0.15)' 
-      : props.theme.colors.primary[50]
-    ) 
+    ? props.theme.gradients.card
     : 'transparent'
   };
   border: none;
   border-left: 3px solid ${props => props.active ? props.theme.colors.primary[500] : 'transparent'};
-  color: ${props => props.active ? props.theme.colors.primary[600] : props.theme.colors.text.primary};
+  color: ${props => props.active ? props.theme.colors.primary[400] : props.theme.colors.text.primary};
   font-size: ${props => props.theme.typography.fontSize.sm};
   font-weight: ${props => props.active ? props.theme.typography.fontWeight.semibold : props.theme.typography.fontWeight.medium};
   cursor: pointer;
@@ -116,16 +114,11 @@ const NavItem = styled.button<{ active?: boolean; theme: any }>`
   
   &:hover {
     background: ${props => props.active 
-      ? (props.theme.mode === 'dark' 
-        ? 'rgba(14, 165, 233, 0.15)' 
-        : props.theme.colors.primary[50]
-      ) 
-      : (props.theme.mode === 'dark' 
-        ? 'rgba(255, 255, 255, 0.05)' 
-        : props.theme.colors.gray[50]
-      )
+      ? props.theme.gradients.card
+      : props.theme.colors.background.cardHover
     };
-    color: ${props => props.active ? props.theme.colors.primary[600] : props.theme.colors.text.primary};
+    color: ${props => props.active ? props.theme.colors.primary[400] : props.theme.colors.text.primary};
+    transform: translateX(4px);
   }
 `;
 
@@ -150,7 +143,9 @@ const MainContainer = styled.div<{ theme: any }>`
 `;
 
 const TopBar = styled.header<{ theme: any }>`
-  background: ${props => props.theme.colors.background.primary};
+  background: ${props => props.theme.colors.background.secondary};
+  background-image: ${props => props.theme.colors.background.pattern};
+  background-size: ${props => props.theme.colors.background.patternSize};
   border-bottom: 1px solid ${props => props.theme.colors.border.primary};
   padding: ${props => props.theme.spacing.md} ${props => props.theme.spacing.xl};
   display: flex;
@@ -159,7 +154,7 @@ const TopBar = styled.header<{ theme: any }>`
   position: sticky;
   top: 0;
   z-index: 100;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(20px);
   
   @media (max-width: 768px) {
     padding: ${props => props.theme.spacing.md};
@@ -184,10 +179,8 @@ const MenuButton = styled.button<{ theme: any }>`
   transition: all 0.2s ease;
   
   &:hover {
-    background: ${props => props.theme.mode === 'dark' 
-      ? 'rgba(255, 255, 255, 0.1)' 
-      : props.theme.colors.gray[100]
-    };
+    background: ${props => props.theme.colors.background.cardHover};
+    transform: scale(1.05);
   }
   
   @media (max-width: 1024px) {
@@ -210,11 +203,9 @@ const BackButton = styled.button<{ theme: any }>`
   transition: all 0.2s ease;
   
   &:hover {
-    background: ${props => props.theme.mode === 'dark' 
-      ? 'rgba(255, 255, 255, 0.1)' 
-      : props.theme.colors.gray[100]
-    };
+    background: ${props => props.theme.colors.background.cardHover};
     color: ${props => props.theme.colors.text.primary};
+    transform: translateX(-2px);
   }
 `;
 

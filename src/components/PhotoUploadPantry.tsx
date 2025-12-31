@@ -1,9 +1,14 @@
 import React, { useState, useRef, useCallback } from 'react';
 import styled from '@emotion/styled';
 import { theme } from 'styles/theme';
-import { uploadPhoto, deletePhoto } from '../lib/firebase-storage';
+import { 
+  uploadImageToPantry, 
+  deletePantryImage, 
+  base64ToBlobUrl, 
+  PantryImage 
+} from 'lib/pantry-storage';
 
-interface PhotoUploadProps {
+interface PhotoUploadPantryProps {
   onPhotosChange: (photos: UploadedPhoto[]) => void;
   maxPhotos?: number;
   category?: 'before' | 'after' | 'general';
@@ -19,6 +24,7 @@ export interface UploadedPhoto {
   category: 'before' | 'after' | 'general';
   uploadedAt: Date;
   size: number;
+  isPantry?: boolean;
 }
 
 const UploadContainer = styled.div`
@@ -40,6 +46,17 @@ const UploadArea = styled.div<{ isDragOver: boolean }>`
     border-color: ${theme.colors.primary[500]};
     background: ${theme.colors.primary[50]};
   }
+`;
+
+const PantryBadge = styled.div`
+  display: inline-block;
+  padding: ${theme.spacing.xs} ${theme.spacing.sm};
+  border-radius: ${theme.borderRadius.sm};
+  font-size: ${theme.typography.fontSize.xs};
+  font-weight: ${theme.typography.fontWeight.medium};
+  margin-bottom: ${theme.spacing.sm};
+  background: ${theme.colors.accent[100]};
+  color: ${theme.colors.accent[700]};
 `;
 
 const UploadIcon = styled.div`
@@ -134,20 +151,9 @@ const UploadProgress = styled.div<{ progress: number }>`
     top: 0;
     height: 100%;
     width: ${props => props.progress}%;
-    background: ${theme.colors.primary[500]};
+    background: ${theme.colors.accent[500]};
     transition: width 0.3s ease;
   }
-`;
-
-const PhotoInfo = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
-  color: white;
-  padding: ${theme.spacing.sm};
-  font-size: ${theme.typography.fontSize.xs};
 `;
 
 const CategoryBadge = styled.span<{ category: string }>`
@@ -173,11 +179,23 @@ const CategoryBadge = styled.span<{ category: string }>`
         `;
       default:
         return `
-          background: ${theme.colors.primary[500]};
+          background: ${theme.colors.accent[500]};
           color: white;
         `;
     }
   }}
+`;
+
+const PantryIndicator = styled.div`
+  position: absolute;
+  top: ${theme.spacing.xs};
+  left: ${theme.spacing.xs};
+  background: rgba(34, 211, 238, 0.9);
+  color: white;
+  padding: 2px 6px;
+  border-radius: ${theme.borderRadius.sm};
+  font-size: 10px;
+  font-weight: bold;
 `;
 
 const ErrorMessage = styled.div`
@@ -190,7 +208,17 @@ const ErrorMessage = styled.div`
   border: 1px solid ${theme.colors.error[200]};
 `;
 
-export const PhotoUpload: React.FC<PhotoUploadProps> = ({
+const SuccessMessage = styled.div`
+  color: ${theme.colors.success[600]};
+  font-size: ${theme.typography.fontSize.sm};
+  margin-top: ${theme.spacing.sm};
+  padding: ${theme.spacing.sm};
+  background: ${theme.colors.success[50]};
+  border-radius: ${theme.borderRadius.sm};
+  border: 1px solid ${theme.colors.success[200]};
+`;
+
+export const PhotoUploadPantry: React.FC<PhotoUploadPantryProps> = ({
   onPhotosChange,
   maxPhotos = 10,
   category = 'general',
@@ -202,124 +230,72 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
   const [uploading, setUploading] = useState<{ [key: string]: number }>({});
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const compressImage = useCallback((file: File, maxWidth = 1200, quality = 0.8): Promise<File> => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      
-      img.onload = () => {
-        // Calculate new dimensions
-        let { width, height } = img;
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        // Draw and compress
-        ctx?.drawImage(img, 0, 0, width, height);
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              const compressedFile = new File([blob], file.name, {
-                type: 'image/jpeg',
-                lastModified: Date.now()
-              });
-              resolve(compressedFile);
-            } else {
-              resolve(file);
-            }
-          },
-          'image/jpeg',
-          quality
-        );
-      };
-      
-      img.src = URL.createObjectURL(file);
-    });
-  }, []);
-
   const uploadFile = useCallback(async (file: File): Promise<UploadedPhoto | null> => {
+    const uploadId = `upload_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+    
     try {
       setError('');
+      setSuccess('');
       
-      // Validate file first
+      // Validate file
       if (!file.type.startsWith('image/')) {
         throw new Error('File must be an image');
       }
       
-      if (file.size > 10 * 1024 * 1024) {
-        throw new Error('File size must be less than 10MB');
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('File size must be less than 5MB');
       }
       
-      // Compress image before upload
-      const compressedFile = await compressImage(file);
-      
-      // Generate unique filename
-      const timestamp = Date.now();
-      const randomId = Math.random().toString(36).substring(2);
-      const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const filename = `${timestamp}_${randomId}.${extension}`;
-      
-      // Create upload path
-      const path = chairId && jobId 
-        ? `chairs/${chairId}/jobs/${jobId}/${category}/${filename}`
-        : `photos/${category}/${filename}`;
-      
-      // Track upload progress
-      const uploadId = `${timestamp}_${randomId}`;
+      // Start progress tracking
       setUploading(prev => ({ ...prev, [uploadId]: 0 }));
       
-      console.log(`Starting upload: ${file.name} -> ${path}`);
+      console.log(`Uploading to Pantry: ${file.name}`);
       
-      // Upload to Firebase Storage with enhanced error handling
-      const downloadURL = await uploadPhoto(
-        compressedFile,
-        path,
+      // Upload to Pantry
+      const pantryImage = await uploadImageToPantry(
+        file,
+        category,
+        chairId,
+        jobId,
         (progress: number) => {
-          console.log(`Upload progress for ${file.name}: ${Math.round(progress)}%`);
+          console.log(`Pantry upload progress: ${Math.round(progress)}%`);
           setUploading(prev => ({ ...prev, [uploadId]: progress }));
-          
-          // Ensure we show 100% completion
-          if (progress >= 100) {
-            setTimeout(() => {
-              setUploading(prev => {
-                const newState = { ...prev };
-                delete newState[uploadId];
-                return newState;
-              });
-            }, 500); // Small delay to show 100% completion
-          }
         }
       );
       
-      console.log(`Upload completed: ${downloadURL}`);
+      // Remove from uploading state
+      setUploading(prev => {
+        const newState = { ...prev };
+        delete newState[uploadId];
+        return newState;
+      });
       
-      // Create photo object
-      const photo: UploadedPhoto = {
-        id: uploadId,
-        url: downloadURL,
-        filename: file.name,
-        category,
-        uploadedAt: new Date(),
-        size: compressedFile.size
+      // Convert to blob URL for display
+      const blobUrl = base64ToBlobUrl(pantryImage.base64Data);
+      
+      setSuccess(`✅ Image uploaded to Pantry successfully! (${(file.size / 1024).toFixed(1)}KB)`);
+      
+      const uploadedPhoto: UploadedPhoto = {
+        id: pantryImage.id,
+        url: blobUrl,
+        filename: pantryImage.filename,
+        category: category,
+        uploadedAt: new Date(pantryImage.uploadedAt),
+        size: pantryImage.size,
+        isPantry: true
       };
       
-      return photo;
+      return uploadedPhoto;
+      
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('Pantry upload error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       setError(`Failed to upload ${file.name}: ${errorMessage}`);
       
       // Remove from uploading state on error
-      const timestamp = Date.now();
-      const randomId = Math.random().toString(36).substring(2);
-      const uploadId = `${timestamp}_${randomId}`;
       setUploading(prev => {
         const newState = { ...prev };
         delete newState[uploadId];
@@ -328,19 +304,19 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
       
       return null;
     }
-  }, [compressImage, category, chairId, jobId]);
+  }, [category, chairId, jobId]);
 
   const handleFiles = useCallback(async (files: FileList) => {
     const fileArray = Array.from(files);
     
-    // Validate file types
+    // Validate files
     const validFiles = fileArray.filter(file => {
       if (!file.type.startsWith('image/')) {
         setError(`${file.name} is not an image file`);
         return false;
       }
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        setError(`${file.name} is too large (max 10MB)`);
+      if (file.size > 5 * 1024 * 1024) {
+        setError(`${file.name} is too large (max 5MB)`);
         return false;
       }
       return true;
@@ -352,14 +328,18 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
       return;
     }
     
-    // Upload files
-    const uploadPromises = validFiles.map(uploadFile);
-    const uploadedPhotos = await Promise.all(uploadPromises);
+    // Upload files sequentially to avoid overwhelming Pantry
+    const uploadedPhotos: UploadedPhoto[] = [];
     
-    // Filter out failed uploads and update state
-    const successfulUploads = uploadedPhotos.filter((photo): photo is UploadedPhoto => photo !== null);
-    const newPhotos = [...photos, ...successfulUploads];
+    for (const file of validFiles) {
+      const uploadedPhoto = await uploadFile(file);
+      if (uploadedPhoto) {
+        uploadedPhotos.push(uploadedPhoto);
+      }
+    }
     
+    // Update state
+    const newPhotos = [...photos, ...uploadedPhotos];
     setPhotos(newPhotos);
     onPhotosChange(newPhotos);
   }, [photos, maxPhotos, uploadFile, onPhotosChange]);
@@ -391,13 +371,17 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
 
   const handleDeletePhoto = useCallback(async (photo: UploadedPhoto) => {
     try {
-      // Delete from Firebase Storage
-      await deletePhoto(photo.url);
+      if (photo.isPantry) {
+        // Delete from Pantry
+        await deletePantryImage(photo.id);
+      }
       
       // Remove from state
       const newPhotos = photos.filter(p => p.id !== photo.id);
       setPhotos(newPhotos);
       onPhotosChange(newPhotos);
+      
+      setSuccess('Photo deleted successfully');
     } catch (error) {
       console.error('Delete error:', error);
       setError(`Failed to delete photo: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -410,6 +394,10 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
 
   return (
     <UploadContainer>
+      <PantryBadge>
+        🥫 Pantry Cloud Storage
+      </PantryBadge>
+      
       <UploadArea
         isDragOver={isDragOver}
         onDrop={handleDrop}
@@ -426,7 +414,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
         <UploadSubtext>
           Drag and drop images here, or click to select files
           <br />
-          Max {maxPhotos} photos, 10MB each
+          Max {maxPhotos} photos, 5MB each • Stored in Pantry Cloud
         </UploadSubtext>
       </UploadArea>
 
@@ -439,6 +427,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
       />
 
       {error && <ErrorMessage>{error}</ErrorMessage>}
+      {success && <SuccessMessage>{success}</SuccessMessage>}
 
       {(photos.length > 0 || Object.keys(uploading).length > 0) && (
         <PhotoGrid>
@@ -448,16 +437,16 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
               <CategoryBadge category={photo.category}>
                 {photo.category}
               </CategoryBadge>
+              {photo.isPantry && (
+                <PantryIndicator>
+                  PANTRY
+                </PantryIndicator>
+              )}
               <PhotoOverlay>
                 <DeleteButton onClick={() => handleDeletePhoto(photo)}>
                   ×
                 </DeleteButton>
               </PhotoOverlay>
-              <PhotoInfo>
-                {photo.filename}
-                <br />
-                {(photo.size / 1024).toFixed(1)}KB
-              </PhotoInfo>
             </PhotoItem>
           ))}
           
@@ -468,13 +457,12 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
                 alignItems: 'center', 
                 justifyContent: 'center',
                 height: '100%',
-                background: theme.colors.gray[100]
+                background: theme.colors.gray[100],
+                flexDirection: 'column'
               }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⏳</div>
-                  <div style={{ fontSize: '0.8rem' }}>Uploading...</div>
-                  <div style={{ fontSize: '0.8rem' }}>{Math.round(progress)}%</div>
-                </div>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🥫</div>
+                <div style={{ fontSize: '0.8rem' }}>Uploading to Pantry...</div>
+                <div style={{ fontSize: '0.8rem' }}>{Math.round(progress)}%</div>
               </div>
               <UploadProgress progress={progress} />
             </PhotoItem>
@@ -488,7 +476,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
         color: theme.colors.text.secondary,
         textAlign: 'center'
       }}>
-        {photos.length} of {maxPhotos} photos uploaded
+        {photos.length} of {maxPhotos} photos uploaded to Pantry Cloud
       </div>
     </UploadContainer>
   );

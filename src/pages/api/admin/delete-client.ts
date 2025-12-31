@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { doc, deleteDoc, updateDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, deleteDoc, updateDoc, collection, query, where, getDocs, writeBatch, getDoc } from 'firebase/firestore';
 import { db } from 'lib/firebase';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -25,6 +25,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const clientRef = doc(db, 'users', clientId);
+
+    // Check if client exists
+    const clientDoc = await getDoc(clientRef);
+    if (!clientDoc.exists()) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
 
     if (action === 'delete') {
       // Get all chairs belonging to this client

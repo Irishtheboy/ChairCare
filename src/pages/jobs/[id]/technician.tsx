@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import styled from '@emotion/styled';
+import { MapPin, QrCode, FileText } from 'lucide-react';
 import { useAuth } from 'contexts/AuthContext';
 import { useTheme } from 'contexts/ThemeContext';
 import { Job, Chair } from 'types/chair-care';
@@ -423,9 +424,16 @@ const TechnicianJobPage: NextPage = () => {
                       Chair {chair.chairNumber}
                     </ChairName>
                     <ChairDetails theme={theme}>
-                      📍 {chair.location}<br />
-                      🏷️ QR: {chair.qrCode}<br />
-                      {chair.model && `📋 Model: ${chair.model}`}
+                      <MapPin size={14} style={{ display: 'inline', marginRight: '4px', color: theme.colors.primary[500] }} />
+                      {chair.location}<br />
+                      <QrCode size={14} style={{ display: 'inline', marginRight: '4px', color: theme.colors.primary[500] }} />
+                      QR: {chair.qrCode}<br />
+                      {chair.model && (
+                        <>
+                          <FileText size={14} style={{ display: 'inline', marginRight: '4px', color: theme.colors.primary[500] }} />
+                          Model: {chair.model}
+                        </>
+                      )}
                     </ChairDetails>
                   </ChairHeader>
                   

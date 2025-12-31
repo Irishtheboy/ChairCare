@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import styled from '@emotion/styled';
+import { MapPin, Navigation, FileText, Wrench } from 'lucide-react';
 import { useAuth } from 'contexts/AuthContext';
 import { Job, Chair, User } from 'types/chair-care';
 import { Button } from 'components/ui/Button';
@@ -446,11 +447,14 @@ const JobArrivalPage: NextPage = () => {
               {job.location && (
                 <ContactItem>
                   <ContactInfo>
-                    <ContactLabel>📍</ContactLabel>
+                    <ContactLabel>
+                      <MapPin size={16} style={{ color: theme.colors.primary[500] }} />
+                    </ContactLabel>
                     <ContactValue>{job.location}</ContactValue>
                   </ContactInfo>
                   <NavigateButton onClick={() => openMaps(job.location!)}>
-                    🗺️ Navigate
+                    <Navigation size={16} style={{ marginRight: '4px' }} />
+                    Navigate
                   </NavigateButton>
                 </ContactItem>
               )}
@@ -461,7 +465,8 @@ const JobArrivalPage: NextPage = () => {
         {/* Job Details */}
         <SectionCard>
           <SectionTitle>
-            📋 Job Details
+            <FileText size={20} style={{ marginRight: '8px', color: theme.colors.primary[500] }} />
+            Job Details
           </SectionTitle>
           <JobDetailsGrid>
             <DetailCard>

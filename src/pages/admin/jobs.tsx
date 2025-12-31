@@ -96,12 +96,13 @@ const InfoItem = styled.div<{ theme: any }>`
 
 const InfoLabel = styled.span<{ theme: any }>`
   font-size: ${props => props.theme.typography.fontSize.sm};
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${props => props.theme.mode === 'dark' ? '#e2e8f0' : props.theme.colors.text.secondary};
   font-weight: ${props => props.theme.typography.fontWeight.medium};
 `;
 
 const InfoValue = styled.span<{ theme: any }>`
-  color: ${props => props.theme.colors.text.primary};
+  color: ${props => props.theme.mode === 'dark' ? '#f8fafc' : props.theme.colors.text.primary};
+  font-weight: ${props => props.theme.typography.fontWeight.medium};
 `;
 
 const JobActions = styled.div<{ theme: any }>`

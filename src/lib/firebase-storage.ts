@@ -17,30 +17,57 @@ export const uploadPhoto = async (
   onProgress?: (progress: number) => void
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
-    const storageRef = ref(storage, path);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    try {
+      const storageRef = ref(storage, path);
+      const uploadTask = uploadBytesResumable(storageRef, file);
 
-    uploadTask.on(
-      'state_changed',
-      (snapshot: UploadTaskSnapshot) => {
-        // Calculate progress percentage
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        onProgress?.(progress);
-      },
-      (error) => {
-        console.error('Upload error:', error);
-        reject(error);
-      },
-      async () => {
-        try {
-          // Upload completed successfully, get download URL
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          resolve(downloadURL);
-        } catch (error) {
-          reject(error);
+      console.log(`Starting Firebase upload: ${path}`);
+
+      uploadTask.on(
+        'state_changed',
+        (snapshot: UploadTaskSnapshot) => {
+          // Calculate progress percentage
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log(`Upload progress: ${Math.round(progress)}% (${snapshot.bytesTransferred}/${snapshot.totalBytes} bytes)`);
+          onProgress?.(progress);
+          
+          // Log state changes
+          switch (snapshot.state) {
+            case 'paused':
+              console.log('Upload is paused');
+              break;
+            case 'running':
+              console.log('Upload is running');
+              break;
+          }
+        },
+        (error) => {
+          console.error('Upload error:', error);
+          console.error('Error code:', error.code);
+          console.error('Error message:', error.message);
+          reject(new Error(`Upload failed: ${error.message}`));
+        },
+        async () => {
+          try {
+            console.log('Upload completed, getting download URL...');
+            // Upload completed successfully, get download URL
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            console.log('Download URL obtained:', downloadURL);
+            
+            // Ensure progress shows 100% before resolving
+            onProgress?.(100);
+            
+            resolve(downloadURL);
+          } catch (error) {
+            console.error('Error getting download URL:', error);
+            reject(new Error(`Failed to get download URL: ${error instanceof Error ? error.message : 'Unknown error'}`));
+          }
         }
-      }
-    );
+      );
+    } catch (error) {
+      console.error('Error initializing upload:', error);
+      reject(new Error(`Failed to initialize upload: ${error instanceof Error ? error.message : 'Unknown error'}`));
+    }
   });
 };
 

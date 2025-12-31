@@ -121,17 +121,28 @@ const JobStatusBadge = styled.span<{ theme: any; status: string }>`
   letter-spacing: 0.05em;
   
   ${props => {
+    const isDark = props.theme.mode === 'dark';
     switch (props.status) {
       case 'New':
-        return `background: ${props.theme.colors.primary[100]}; color: ${props.theme.colors.primary[700]};`;
+        return isDark 
+          ? `background: rgba(74, 222, 128, 0.2); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3);`
+          : `background: ${props.theme.colors.primary[100]}; color: ${props.theme.colors.primary[700]};`;
       case 'Scheduled':
-        return `background: ${props.theme.colors.warning[100]}; color: ${props.theme.colors.warning[700]};`;
+        return isDark
+          ? `background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3);`
+          : `background: ${props.theme.colors.warning[100]}; color: ${props.theme.colors.warning[700]};`;
       case 'In Progress':
-        return `background: ${props.theme.colors.accent[100]}; color: ${props.theme.colors.accent[700]};`;
+        return isDark
+          ? `background: rgba(34, 211, 238, 0.2); color: #22d3ee; border: 1px solid rgba(34, 211, 238, 0.3);`
+          : `background: ${props.theme.colors.accent[100]}; color: ${props.theme.colors.accent[700]};`;
       case 'Completed':
-        return `background: ${props.theme.colors.success[100]}; color: ${props.theme.colors.success[700]};`;
+        return isDark
+          ? `background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3);`
+          : `background: ${props.theme.colors.success[100]}; color: ${props.theme.colors.success[700]};`;
       default:
-        return `background: ${props.theme.colors.gray[100]}; color: ${props.theme.colors.gray[700]};`;
+        return isDark
+          ? `background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);`
+          : `background: ${props.theme.colors.gray[100]}; color: ${props.theme.colors.gray[700]};`;
     }
   }}
 `;
@@ -142,7 +153,12 @@ const JobDetails = styled.div<{ theme: any }>`
   gap: ${props => props.theme.spacing.sm};
   margin-bottom: ${props => props.theme.spacing.md};
   font-size: ${props => props.theme.typography.fontSize.sm};
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${props => props.theme.mode === 'dark' ? '#e2e8f0' : props.theme.colors.text.secondary};
+  
+  strong {
+    color: ${props => props.theme.mode === 'dark' ? '#f8fafc' : props.theme.colors.text.primary};
+    font-weight: ${props => props.theme.typography.fontWeight.semibold};
+  }
 `;
 
 const TechnicianInfo = styled.div<{ theme: any }>`
@@ -150,9 +166,13 @@ const TechnicianInfo = styled.div<{ theme: any }>`
   align-items: center;
   gap: ${props => props.theme.spacing.sm};
   padding: ${props => props.theme.spacing.sm};
-  background: ${props => props.theme.colors.gray[50]};
+  background: ${props => props.theme.mode === 'dark' 
+    ? 'rgba(255, 255, 255, 0.05)' 
+    : props.theme.colors.gray[50]
+  };
   border-radius: ${props => props.theme.borderRadius.sm};
   margin-bottom: ${props => props.theme.spacing.md};
+  color: ${props => props.theme.mode === 'dark' ? '#f8fafc' : props.theme.colors.text.primary};
 `;
 
 const TechnicianAvatar = styled.div<{ theme: any }>`
@@ -171,7 +191,10 @@ const TechnicianAvatar = styled.div<{ theme: any }>`
 const ProgressBar = styled.div<{ theme: any }>`
   width: 100%;
   height: 8px;
-  background: ${props => props.theme.colors.gray[200]};
+  background: ${props => props.theme.mode === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : props.theme.colors.gray[200]
+  };
   border-radius: ${props => props.theme.borderRadius.full};
   overflow: hidden;
   margin: ${props => props.theme.spacing.sm} 0;
@@ -179,7 +202,10 @@ const ProgressBar = styled.div<{ theme: any }>`
 
 const ProgressFill = styled.div<{ theme: any; progress: number }>`
   height: 100%;
-  background: ${props => props.theme.colors.primary[500]};
+  background: ${props => props.theme.mode === 'dark' 
+    ? props.theme.colors.primary[400] 
+    : props.theme.colors.primary[500]
+  };
   width: ${props => props.progress}%;
   transition: width 0.3s ease;
 `;
@@ -440,10 +466,16 @@ const JobProgressPage: NextPage = () => {
                         {getTechnicianInitials(technician.name)}
                       </TechnicianAvatar>
                       <div>
-                        <div style={{ fontWeight: theme.typography.fontWeight.medium }}>
+                        <div style={{ 
+                          fontWeight: theme.typography.fontWeight.medium,
+                          color: theme.mode === 'dark' ? '#f8fafc' : theme.colors.text.primary
+                        }}>
                           {technician.name}
                         </div>
-                        <div style={{ fontSize: theme.typography.fontSize.xs, color: theme.colors.text.secondary }}>
+                        <div style={{ 
+                          fontSize: theme.typography.fontSize.xs, 
+                          color: theme.mode === 'dark' ? '#cbd5e1' : theme.colors.text.secondary
+                        }}>
                           {technician.specialization || 'General Technician'}
                         </div>
                       </div>
@@ -452,10 +484,16 @@ const JobProgressPage: NextPage = () => {
                     <TechnicianInfo theme={theme}>
                       <TechnicianAvatar theme={theme}>?</TechnicianAvatar>
                       <div>
-                        <div style={{ fontWeight: theme.typography.fontWeight.medium, color: theme.colors.warning[600] }}>
+                        <div style={{ 
+                          fontWeight: theme.typography.fontWeight.medium, 
+                          color: theme.mode === 'dark' ? '#fbbf24' : theme.colors.warning[600]
+                        }}>
                           Unassigned
                         </div>
-                        <div style={{ fontSize: theme.typography.fontSize.xs, color: theme.colors.text.secondary }}>
+                        <div style={{ 
+                          fontSize: theme.typography.fontSize.xs, 
+                          color: theme.mode === 'dark' ? '#cbd5e1' : theme.colors.text.secondary
+                        }}>
                           No technician assigned
                         </div>
                       </div>
@@ -468,7 +506,8 @@ const JobProgressPage: NextPage = () => {
                       justifyContent: 'space-between', 
                       alignItems: 'center',
                       fontSize: theme.typography.fontSize.sm,
-                      marginBottom: theme.spacing.xs
+                      marginBottom: theme.spacing.xs,
+                      color: theme.mode === 'dark' ? '#e2e8f0' : theme.colors.text.secondary
                     }}>
                       <span>Progress</span>
                       <span>{progress}%</span>
@@ -482,11 +521,12 @@ const JobProgressPage: NextPage = () => {
                     <div style={{ 
                       marginTop: theme.spacing.md,
                       padding: theme.spacing.sm,
-                      background: theme.colors.gray[50],
+                      background: theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : theme.colors.gray[50],
                       borderRadius: theme.borderRadius.sm,
-                      fontSize: theme.typography.fontSize.sm
+                      fontSize: theme.typography.fontSize.sm,
+                      color: theme.mode === 'dark' ? '#e2e8f0' : theme.colors.text.secondary
                     }}>
-                      <strong>Notes:</strong> {job.adminNotes}
+                      <strong style={{ color: theme.mode === 'dark' ? '#f8fafc' : theme.colors.text.primary }}>Notes:</strong> {job.adminNotes}
                     </div>
                   )}
 

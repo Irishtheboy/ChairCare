@@ -19,6 +19,11 @@ import { db } from 'lib/firebase';
 const ScanContainer = styled.div`
   max-width: 600px;
   margin: 0 auto;
+  padding: ${theme.spacing.md};
+  
+  @media (max-width: ${theme.breakpoints.md}) {
+    padding: ${theme.spacing.sm};
+  }
 `;
 
 const ScanCard = styled(Card)<{ theme: any }>`
@@ -75,6 +80,12 @@ const InfoGrid = styled.div<{ theme: any }>`
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: ${props => props.theme.spacing.lg};
   margin-bottom: ${props => props.theme.spacing.xl};
+  
+  @media (max-width: ${props => props.theme.breakpoints.md}) {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: ${props => props.theme.spacing.md};
+    margin-bottom: ${props => props.theme.spacing.lg};
+  }
 `;
 
 const InfoItem = styled.div`
@@ -100,6 +111,10 @@ const ServiceForm = styled.form<{ theme: any }>`
   display: flex;
   flex-direction: column;
   gap: ${props => props.theme.spacing.lg};
+  
+  @media (max-width: ${props => props.theme.breakpoints.md}) {
+    gap: ${props => props.theme.spacing.md};
+  }
 `;
 
 const Select = styled.select<{ theme: any }>`
@@ -141,6 +156,11 @@ const TextArea = styled.textarea<{ theme: any }>`
   
   &::placeholder {
     color: ${props => props.theme.colors.text.tertiary};
+  }
+  
+  @media (max-width: ${props => props.theme.breakpoints.md}) {
+    min-height: 100px;
+    font-size: 16px; /* Prevents zoom on iOS */
   }
 `;
 

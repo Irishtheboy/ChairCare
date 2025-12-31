@@ -9,6 +9,10 @@ import { Button } from 'components/ui/Button';
 import { Card } from 'components/ui/Card';
 import { Logo } from 'components/ui/Logo';
 import { PhotoUploadDebug } from 'components/PhotoUploadDebug';
+import { ImageUploadTest } from 'components/ImageUploadTest';
+import { PhotoUploadFallback } from 'components/PhotoUploadFallback';
+import { PhotoUploadPantry } from 'components/PhotoUploadPantry';
+import { PantryTest } from 'components/PantryTest';
 import { uploadPhoto } from 'lib/firebase-storage';
 
 const Container = styled.div`
@@ -304,6 +308,42 @@ const LogoUploadPage: NextPage = () => {
             </PreviewSection>
           </Card.Content>
         </UploadCard>
+
+        {/* Pantry Cloud Storage Test */}
+        <PantryTest />
+
+        {/* Pantry Photo Upload Test */}
+        <Card>
+          <Card.Header>
+            <Card.Title>🥫 Pantry Photo Upload</Card.Title>
+          </Card.Header>
+          <Card.Content>
+            <p>Upload images directly to Pantry Cloud Storage (JSON-based storage service).</p>
+            <PhotoUploadPantry
+              onPhotosChange={(photos) => console.log('Pantry photos:', photos)}
+              maxPhotos={5}
+              category="general"
+            />
+          </Card.Content>
+        </Card>
+
+        {/* Fallback Photo Upload Test */}
+        <Card>
+          <Card.Header>
+            <Card.Title>📷 Fallback Photo Upload Test</Card.Title>
+          </Card.Header>
+          <Card.Content>
+            <p>This component tries Firebase Storage first, then falls back to base64 storage if Firebase fails.</p>
+            <PhotoUploadFallback
+              onPhotosChange={(photos) => console.log('Uploaded photos:', photos)}
+              maxPhotos={3}
+              category="general"
+            />
+          </Card.Content>
+        </Card>
+
+        {/* Enhanced Image Upload Test Tool */}
+        <ImageUploadTest />
 
         {/* Debug Tool for Photo Upload Issues */}
         <PhotoUploadDebug />

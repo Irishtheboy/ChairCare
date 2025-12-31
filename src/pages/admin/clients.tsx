@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import styled from '@emotion/styled';
+import { Mail, Calendar } from 'lucide-react';
 import { useAuth } from 'contexts/AuthContext';
 import { User } from 'types/chair-care';
 import apiClient from 'lib/api-client';
@@ -192,6 +193,21 @@ const EmptyState = styled.div`
   }
 `;
 
+const IconWrapper = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: ${theme.spacing.sm};
+  color: ${theme.colors.primary[400]};
+  width: 16px;
+  height: 16px;
+  
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+`;
+
 interface ClientForm {
   name: string;
   email: string;
@@ -245,6 +261,7 @@ const ClientsPage: NextPage = () => {
           name: userData.name,
           role: userData.role,
           companyName: userData.companyName,
+          status: userData.status || 'approved',
           createdAt: userData.createdAt?.toDate ? userData.createdAt.toDate() : new Date(),
           updatedAt: userData.updatedAt?.toDate ? userData.updatedAt.toDate() : new Date()
         }));
@@ -528,8 +545,15 @@ const ClientsPage: NextPage = () => {
                       {client.companyName && ` - ${client.companyName}`}
                     </ClientName>
                     <ClientDetails>
-                      📧 {client.email}<br />
-                      📅 Created: {client.createdAt.toLocaleDateString('en-ZA')}
+                      <IconWrapper>
+                        <Mail />
+                      </IconWrapper>
+                      {client.email}
+                      <br />
+                      <IconWrapper>
+                        <Calendar />
+                      </IconWrapper>
+                      Created: {client.createdAt.toLocaleDateString('en-ZA')}
                     </ClientDetails>
                   </ClientInfo>
                   <ClientActions>

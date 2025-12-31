@@ -12,6 +12,7 @@
 		"emotion-reset": "3.0.1",
 		"firebase": "^12.7.0",
 		"formidable": "2.0.1",
+		"lucide-react": "^0.562.0",
 		"next": "12.1.6",
 		"nodemailer": "6.7.5",
 		"qr-scanner": "^1.4.2",

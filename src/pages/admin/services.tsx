@@ -182,6 +182,20 @@ const EmptyState = styled.div`
   color: ${theme.colors.text.secondary};
 `;
 
+const RandIcon = styled.span<{ size?: 'sm' | 'md' | 'lg' }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: ${props => props.size === 'sm' ? '16px' : props.size === 'lg' ? '24px' : '20px'};
+  height: ${props => props.size === 'sm' ? '16px' : props.size === 'lg' ? '24px' : '20px'};
+  background: ${theme.colors.primary[500]};
+  color: white;
+  border-radius: 50%;
+  font-size: ${props => props.size === 'sm' ? '10px' : props.size === 'lg' ? '14px' : '12px'};
+  font-weight: ${theme.typography.fontWeight.bold};
+  margin-right: 4px;
+`;
+
 type ActiveTab = 'services' | 'parts';
 
 const ServicesManagement: NextPage = () => {
@@ -429,7 +443,10 @@ const ServicesManagement: NextPage = () => {
                 {services.map((service) => (
                   <TableRow key={service.id}>
                     <TableCell>{service.name}</TableCell>
-                    <TableCell>R{service.defaultPrice.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <RandIcon size="sm">R</RandIcon>
+                      {service.defaultPrice.toFixed(2)}
+                    </TableCell>
                     <TableCell>
                       <StatusBadge active={service.active}>
                         {service.active ? 'Active' : 'Inactive'}
@@ -467,8 +484,14 @@ const ServicesManagement: NextPage = () => {
                 {parts.map((part) => (
                   <TableRow key={part.id}>
                     <TableCell>{part.name}</TableCell>
-                    <TableCell>R{part.sellPrice.toFixed(2)}</TableCell>
-                    <TableCell>R{(part.costPrice || 0).toFixed(2)}</TableCell>
+                    <TableCell>
+                      <RandIcon size="sm">R</RandIcon>
+                      {part.sellPrice.toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      <RandIcon size="sm">R</RandIcon>
+                      {(part.costPrice || 0).toFixed(2)}
+                    </TableCell>
                     <TableCell>{part.stockLevel || 0}</TableCell>
                     <TableCell>
                       <StatusBadge active={part.active}>

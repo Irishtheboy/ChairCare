@@ -3,6 +3,22 @@ import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import styled from '@emotion/styled';
+import { 
+  MapPin, 
+  Calendar, 
+  Wrench, 
+  Mail, 
+  Phone, 
+  QrCode,
+  Building,
+  User,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Settings,
+  FileText,
+  TrendingUp
+} from 'lucide-react';
 import { useAuth } from 'contexts/AuthContext';
 import { useTheme } from 'contexts/ThemeContext';
 import { DashboardStats, Chair, ServiceLog, Job } from 'types/chair-care';
@@ -39,31 +55,10 @@ const StatsGrid = styled.div<{ theme: any }>`
 
 const StatCard = styled(Card)<{ theme: any }>`
   text-align: center;
-  background: ${props => props.theme.mode === 'dark' 
-    ? 'rgba(30, 41, 59, 0.8)' 
-    : 'rgba(255, 255, 255, 0.95)'
-  };
-  border: 1px solid ${props => props.theme.colors.border.primary};
-  border-radius: ${props => props.theme.borderRadius['2xl']};
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
   position: relative;
-  overflow: hidden;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: ${props => props.theme.gradients.accent};
-  }
   
   &:hover {
     transform: translateY(-8px);
-    box-shadow: ${props => props.theme.shadows['2xl']};
-    border-color: ${props => props.theme.colors.primary[300]};
   }
 `;
 
@@ -88,7 +83,10 @@ const StatValue = styled.div<{ theme: any }>`
 `;
 
 const StatLabel = styled.div<{ theme: any }>`
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${props => props.theme.mode === 'dark' 
+    ? props.theme.colors.text.secondary 
+    : props.theme.colors.text.lightSecondary
+  };
   font-size: ${props => props.theme.typography.fontSize.lg};
   font-weight: ${props => props.theme.typography.fontWeight.semibold};
   text-transform: uppercase;
@@ -105,13 +103,6 @@ const StatLabel = styled.div<{ theme: any }>`
 
 const Section = styled(Card)<{ theme: any }>`
   margin-bottom: ${props => props.theme.spacing['2xl']};
-  background: ${props => props.theme.mode === 'dark' 
-    ? 'rgba(30, 41, 59, 0.8)' 
-    : 'rgba(255, 255, 255, 0.95)'
-  };
-  border: 1px solid ${props => props.theme.colors.border.primary};
-  border-radius: ${props => props.theme.borderRadius['2xl']};
-  backdrop-filter: blur(10px);
 `;
 
 const SectionHeader = styled.div<{ theme: any }>`
@@ -291,6 +282,71 @@ const EmptyState = styled.div<{ theme: any }>`
     font-size: ${props => props.theme.typography.fontSize.lg};
     line-height: ${props => props.theme.typography.lineHeight.relaxed};
   }
+`;
+
+const IconWrapper = styled.span<{ theme: any; size?: 'sm' | 'md' | 'lg' }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: ${props => props.theme.spacing.sm};
+  color: ${props => props.theme.colors.primary[400]};
+  
+  ${({ size = 'md' }) => {
+    switch (size) {
+      case 'sm':
+        return `
+          width: 16px;
+          height: 16px;
+        `;
+      case 'lg':
+        return `
+          width: 24px;
+          height: 24px;
+        `;
+      default:
+        return `
+          width: 20px;
+          height: 20px;
+        `;
+    }
+  }}
+  
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+`;
+
+const RandIcon = styled.span<{ theme: any; size?: 'sm' | 'md' | 'lg' }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: ${props => props.theme.spacing.sm};
+  color: ${props => props.theme.colors.primary[400]};
+  font-weight: ${props => props.theme.typography.fontWeight.bold};
+  
+  ${({ size = 'md' }) => {
+    switch (size) {
+      case 'sm':
+        return `
+          width: 16px;
+          height: 16px;
+          font-size: 12px;
+        `;
+      case 'lg':
+        return `
+          width: 24px;
+          height: 24px;
+          font-size: 18px;
+        `;
+      default:
+        return `
+          width: 20px;
+          height: 20px;
+          font-size: 14px;
+        `;
+    }
+  }}
 `;
 
 const DashboardPage: NextPage = () => {
@@ -579,7 +635,7 @@ const DashboardPage: NextPage = () => {
         {/* Rest of dashboard content */}
         {user.role === 'technician' ? (
           // Technician Dashboard
-          <Section theme={theme}>
+          <Section theme={theme} hover padding="lg">
             <SectionHeader theme={theme}>
               <SectionTitle theme={theme}>My Assigned Jobs</SectionTitle>
             </SectionHeader>
@@ -598,9 +654,20 @@ const DashboardPage: NextPage = () => {
                         Job #{job.jobId} - {job.clientName}
                       </ItemTitle>
                       <ItemDetails theme={theme}>
-                        📍 {job.location || 'Client site'}<br />
-                        📅 {job.scheduledDate ? formatDate(job.scheduledDate) : 'Not scheduled'} {job.scheduledTime || ''}<br />
-                        🔧 {job.jobType} • {job.chairs?.length || 0} chairs
+                        <IconWrapper theme={theme} size="sm">
+                          <MapPin />
+                        </IconWrapper>
+                        {job.location || 'Client site'}
+                        <br />
+                        <IconWrapper theme={theme} size="sm">
+                          <Calendar />
+                        </IconWrapper>
+                        {job.scheduledDate ? formatDate(job.scheduledDate) : 'Not scheduled'} {job.scheduledTime || ''}
+                        <br />
+                        <IconWrapper theme={theme} size="sm">
+                          <Wrench />
+                        </IconWrapper>
+                        {job.jobType} • {job.chairs?.length || 0} chairs
                       </ItemDetails>
                     </ItemInfo>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.sm, alignItems: 'flex-end' }}>
@@ -638,7 +705,7 @@ const DashboardPage: NextPage = () => {
           <>
             {user.role === 'admin' && (
               <>
-                <Section theme={theme}>
+                <Section theme={theme} hover padding="lg">
                   <SectionHeader theme={theme}>
                     <SectionTitle theme={theme}>Quick Actions</SectionTitle>
                   </SectionHeader>
@@ -694,7 +761,7 @@ const DashboardPage: NextPage = () => {
                   </QuickActionsGrid>
                 </Section>
 
-                <Section theme={theme}>
+                <Section theme={theme} hover padding="lg">
                   <SectionHeader theme={theme}>
                     <SectionTitle theme={theme}>Pending Service Requests</SectionTitle>
                     <ActionButton
@@ -721,9 +788,20 @@ const DashboardPage: NextPage = () => {
                               {request.chair?.chairId || 'Unknown Chair'} - {request.serviceType}
                             </ItemTitle>
                             <ItemDetails theme={theme}>
-                              📍 {request.chair?.location || 'Unknown location'}<br />
-                              📝 {request.description}<br />
-                              💰 R{request.cost?.toFixed(2) || '0.00'}
+                              <IconWrapper theme={theme} size="sm">
+                                <MapPin />
+                              </IconWrapper>
+                              {request.chair?.location || 'Unknown location'}
+                              <br />
+                              <IconWrapper theme={theme} size="sm">
+                                <FileText />
+                              </IconWrapper>
+                              {request.description}
+                              <br />
+                              <RandIcon theme={theme} size="sm">
+                                R
+                              </RandIcon>
+                              {request.cost?.toFixed(2) || '0.00'}
                             </ItemDetails>
                           </ItemInfo>
                           <ActionButton
@@ -742,7 +820,7 @@ const DashboardPage: NextPage = () => {
               </>
             )}
 
-            <Section theme={theme}>
+            <Section theme={theme} hover padding="lg">
               <SectionHeader theme={theme}>
                 <SectionTitle theme={theme}>My Chairs</SectionTitle>
                 <div style={{ display: 'flex', gap: theme.spacing.md, flexWrap: 'wrap' }}>
@@ -779,8 +857,15 @@ const DashboardPage: NextPage = () => {
                           {chair.chairNumber} - {chair.model || 'Office Chair'}
                         </ItemTitle>
                         <ItemDetails theme={theme}>
-                          📍 {chair.location}<br />
-                          🏷️ QR Code: {chair.qrCode}
+                          <IconWrapper theme={theme} size="sm">
+                            <MapPin />
+                          </IconWrapper>
+                          {chair.location}
+                          <br />
+                          <IconWrapper theme={theme} size="sm">
+                            <QrCode />
+                          </IconWrapper>
+                          QR Code: {chair.qrCode}
                         </ItemDetails>
                       </ItemInfo>
                       <ActionButton
@@ -797,7 +882,7 @@ const DashboardPage: NextPage = () => {
               )}
             </Section>
 
-            <Section theme={theme}>
+            <Section theme={theme} hover padding="lg">
               <SectionHeader theme={theme}>
                 <SectionTitle theme={theme}>Recent Service Activity</SectionTitle>
               </SectionHeader>
@@ -816,8 +901,17 @@ const DashboardPage: NextPage = () => {
                           {log.serviceType.toUpperCase()} - {log.chair?.chairNumber}
                         </ItemTitle>
                         <ItemDetails theme={theme}>
-                          {log.description}<br />
-                          💰 {formatCurrency(log.cost)} • 📅 {formatDate(log.createdAt)}
+                          {log.description}
+                          <br />
+                          <RandIcon theme={theme} size="sm">
+                            R
+                          </RandIcon>
+                          {formatCurrency(log.cost)}
+                          <span style={{ margin: '0 8px' }}>•</span>
+                          <IconWrapper theme={theme} size="sm">
+                            <Calendar />
+                          </IconWrapper>
+                          {formatDate(log.createdAt)}
                         </ItemDetails>
                       </ItemInfo>
                       <StatusBadge status={log.status} theme={theme}>

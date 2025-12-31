@@ -7,6 +7,8 @@ import { Card } from 'components/ui/Card';
 import { theme } from 'styles/theme';
 import { QRScanner } from 'components/QRScanner';
 import { PhotoUpload, UploadedPhoto } from 'components/PhotoUpload';
+import { PhotoUploadFallback } from 'components/PhotoUploadFallback';
+import { PhotoUploadPantry } from 'components/PhotoUploadPantry';
 import { Chair, ChairServiceEntry, Service, Part } from 'types/chair-care';
 import { doc, getDoc, updateDoc, addDoc, collection, serverTimestamp, getDocs } from 'firebase/firestore';
 import { db } from 'lib/firebase';
@@ -241,6 +243,20 @@ const FormActions = styled.div`
   margin-top: ${theme.spacing.lg};
 `;
 
+const RandIcon = styled.span<{ size?: 'sm' | 'md' | 'lg' }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: ${props => props.size === 'sm' ? '16px' : props.size === 'lg' ? '24px' : '20px'};
+  height: ${props => props.size === 'sm' ? '16px' : props.size === 'lg' ? '24px' : '20px'};
+  background: ${theme.colors.primary[500]};
+  color: white;
+  border-radius: 50%;
+  font-size: ${props => props.size === 'sm' ? '10px' : props.size === 'lg' ? '14px' : '12px'};
+  font-weight: ${theme.typography.fontWeight.bold};
+  margin-right: 4px;
+`;
+
 const SERVICES = [
   'Gas lift replacement',
   'Mechanism repair',
@@ -468,7 +484,10 @@ const ScanChair: NextPage = () => {
                 </DetailItem>
                 <DetailItem>
                   <DetailLabel>Total Spent</DetailLabel>
-                  <DetailValue>R{(chair.totalSpent || 0).toFixed(2)}</DetailValue>
+                  <DetailValue>
+                    <RandIcon size="sm">R</RandIcon>
+                    {(chair.totalSpent || 0).toFixed(2)}
+                  </DetailValue>
                 </DetailItem>
               </ChairDetails>
 
@@ -514,11 +533,13 @@ const ScanChair: NextPage = () => {
 
               <FormGroup>
                 <Label>Before Photos</Label>
-                <PhotoUpload
+                <PhotoUploadPantry
                   existingPhotos={beforePhotos}
                   onPhotosChange={setBeforePhotos}
                   maxPhotos={5}
                   category="before"
+                  chairId={chair.id}
+                  jobId="MANUAL"
                 />
               </FormGroup>
 
@@ -546,7 +567,8 @@ const ScanChair: NextPage = () => {
                       <PartName>
                         <div>{part.name}</div>
                         <div style={{ fontSize: theme.typography.fontSize.sm, color: theme.colors.text.secondary }}>
-                          R{part.price.toFixed(2)} each
+                          <RandIcon size="sm">R</RandIcon>
+                          {part.price.toFixed(2)} each
                         </div>
                       </PartName>
                       <QuantityInput
@@ -563,11 +585,13 @@ const ScanChair: NextPage = () => {
 
               <FormGroup>
                 <Label>After Photos</Label>
-                <PhotoUpload
+                <PhotoUploadPantry
                   existingPhotos={afterPhotos}
                   onPhotosChange={setAfterPhotos}
                   maxPhotos={5}
                   category="after"
+                  chairId={chair.id}
+                  jobId="MANUAL"
                 />
               </FormGroup>
 

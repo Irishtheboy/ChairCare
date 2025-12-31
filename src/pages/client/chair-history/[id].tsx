@@ -87,18 +87,53 @@ const RequestModal = styled.div<{ isOpen: boolean }>`
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   display: ${props => props.isOpen ? 'flex' : 'none'};
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 1000;
   padding: ${theme.spacing.lg};
+  overflow-y: auto;
+  
+  @media (max-width: ${theme.breakpoints.md}) {
+    padding: ${theme.spacing.md};
+    align-items: flex-start;
+  }
 `;
 
 const RequestForm = styled(Card)`
   padding: ${theme.spacing.xl};
   width: 100%;
   max-width: 500px;
-  max-height: 90vh;
+  max-height: calc(100vh - ${theme.spacing.xl});
   overflow-y: auto;
+  margin: ${theme.spacing.lg} auto;
+  
+  @media (max-width: ${theme.breakpoints.md}) {
+    padding: ${theme.spacing.lg};
+    margin: ${theme.spacing.md} auto;
+    max-height: calc(100vh - ${theme.spacing.md});
+  }
+  
+  /* Ensure smooth scrolling */
+  scroll-behavior: smooth;
+  
+  /* Custom scrollbar for better UX */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: ${theme.colors.gray[100]};
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: ${theme.colors.gray[400]};
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: ${theme.colors.gray[500]};
+  }
 `;
 
 const FormTitle = styled.h2`
@@ -106,10 +141,38 @@ const FormTitle = styled.h2`
   color: ${theme.colors.text.primary};
   font-size: ${theme.typography.fontSize.xl};
   font-weight: ${theme.typography.fontWeight.semibold};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: ${theme.typography.fontSize.xl};
+  color: ${theme.colors.text.secondary};
+  cursor: pointer;
+  padding: ${theme.spacing.xs};
+  border-radius: ${theme.borderRadius.md};
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${theme.colors.gray[100]};
+    color: ${theme.colors.text.primary};
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px ${theme.colors.primary[500]};
+  }
 `;
 
 const FormGroup = styled.div`
   margin-bottom: ${theme.spacing.lg};
+  
+  @media (max-width: ${theme.breakpoints.md}) {
+    margin-bottom: ${theme.spacing.md};
+  }
 `;
 
 const Label = styled.label`
@@ -152,6 +215,11 @@ const TextArea = styled.textarea`
     border-color: ${theme.colors.primary[500]};
     box-shadow: 0 0 0 3px ${theme.colors.primary[100]};
   }
+  
+  @media (max-width: ${theme.breakpoints.md}) {
+    min-height: 100px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
 `;
 
 const UrgencySelect = styled(Select)<{ urgency: string }>`
@@ -170,6 +238,11 @@ const FormActions = styled.div`
   gap: ${theme.spacing.md};
   justify-content: flex-end;
   margin-top: ${theme.spacing.xl};
+  
+  @media (max-width: ${theme.breakpoints.md}) {
+    flex-direction: column-reverse;
+    gap: ${theme.spacing.sm};
+  }
 `;
 
 const LoadingState = styled.div`
@@ -226,6 +299,28 @@ const ChairHistoryPage: NextPage = () => {
       setShowRequestModal(true);
     }
   }, [router.query.request, chair]);
+
+  // Add keyboard support for closing modal
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showRequestModal) {
+        setShowRequestModal(false);
+      }
+    };
+
+    if (showRequestModal) {
+      document.addEventListener('keydown', handleKeyDown);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [showRequestModal]);
 
   const loadChairData = async () => {
     try {
@@ -421,9 +516,26 @@ const ChairHistoryPage: NextPage = () => {
 
         <ChairServiceHistory chair={chair} />
 
-        <RequestModal isOpen={showRequestModal}>
+        <RequestModal 
+          isOpen={showRequestModal}
+          onClick={(e) => {
+            // Close modal when clicking the backdrop
+            if (e.target === e.currentTarget) {
+              setShowRequestModal(false);
+            }
+          }}
+        >
           <RequestForm>
-            <FormTitle>Request Service</FormTitle>
+            <FormTitle>
+              Request Service
+              <CloseButton 
+                type="button" 
+                onClick={() => setShowRequestModal(false)}
+                aria-label="Close modal"
+              >
+                ×
+              </CloseButton>
+            </FormTitle>
             
             <form onSubmit={handleSubmitRequest}>
               <FormGroup>
