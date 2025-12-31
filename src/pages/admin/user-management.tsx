@@ -9,10 +9,12 @@ import { Layout } from 'components/ui/Layout';
 import { Button } from 'components/ui/Button';
 import { Card } from 'components/ui/Card';
 import { Input } from 'components/ui/Input';
+import { ConfirmationModal } from 'components/ui/ConfirmationModal';
 import { UserProfileModal } from 'components/user/UserProfileModal';
 import { collection, query, getDocs, addDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { db } from 'lib/firebase';
+import apiClient from 'lib/api-client';
 
 const UserManagementContainer = styled.div<{ theme: any }>`
   max-width: 1400px;
@@ -286,6 +288,11 @@ const UserManagementPage: NextPage = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [creating, setCreating] = useState(false);
   
+  // Modal states for deletion
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteAction, setDeleteAction] = useState<'delete' | 'deactivate' | 'suspend'>('deactivate');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -393,6 +400,68 @@ const UserManagementPage: NextPage = () => {
 
   const handleUserUpdated = () => {
     loadUsers(); // Refresh the users list
+  };
+
+  const handleUserAction = (userToManage: User, action: 'delete' | 'deactivate' | 'suspend') => {
+    setSelectedUser(userToManage);
+    setDeleteAction(action);
+    setShowDeleteModal(true);
+  };
+
+  const confirmUserAction = async () => {
+    if (!selectedUser) return;
+
+    setDeleteLoading(true);
+    try {
+      const response = await apiClient.post('/api/admin/delete-user', {
+        userId: selectedUser.id,
+        action: deleteAction
+      });
+
+      if (response.data.success) {
+        // Refresh the users list
+        await loadUsers();
+        setShowDeleteModal(false);
+        setSelectedUser(null);
+      } else {
+        alert(response.data.error || 'Failed to perform action');
+      }
+    } catch (error: any) {
+      console.error('Error performing user action:', error);
+      alert(error.response?.data?.error || 'Failed to perform action');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const getActionModalContent = () => {
+    if (!selectedUser) return { title: '', message: '', confirmText: '', variant: 'info' as const };
+
+    switch (deleteAction) {
+      case 'delete':
+        return {
+          title: 'Delete User',
+          message: `Are you sure you want to permanently delete user "${selectedUser.name}"? This action cannot be undone and will only work if the user has no associated jobs, service history, or chairs.`,
+          confirmText: 'Delete Permanently',
+          variant: 'danger' as const
+        };
+      case 'deactivate':
+        return {
+          title: 'Deactivate User',
+          message: `Are you sure you want to deactivate user "${selectedUser.name}"? The user will be marked as inactive but can be reactivated later.`,
+          confirmText: 'Deactivate',
+          variant: 'warning' as const
+        };
+      case 'suspend':
+        return {
+          title: 'Suspend User',
+          message: `Are you sure you want to suspend user "${selectedUser.name}"? The user will be temporarily suspended from accessing the system.`,
+          confirmText: 'Suspend User',
+          variant: 'warning' as const
+        };
+      default:
+        return { title: '', message: '', confirmText: '', variant: 'info' as const };
+    }
   };
 
   const getUserInitials = (name: string) => {
@@ -571,10 +640,35 @@ const UserManagementPage: NextPage = () => {
                   <Button
                     size="sm"
                     variant="primary"
-                    onClick={() => handleEditUser(user)}
+                    onClick={() => handleEditUser(userData)}
                   >
                     Edit Profile
                   </Button>
+                  {userData.id !== user?.id && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="warning"
+                        onClick={() => handleUserAction(userData, 'deactivate')}
+                      >
+                        Deactivate
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleUserAction(userData, 'suspend')}
+                      >
+                        Suspend
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => handleUserAction(userData, 'delete')}
+                      >
+                        Delete
+                      </Button>
+                    </>
+                  )}
                 </UserActions>
               </UserCard>
             ))}
@@ -683,6 +777,18 @@ const UserManagementPage: NextPage = () => {
             onUserUpdated={handleUserUpdated}
           />
         )}
+
+        {/* Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setSelectedUser(null);
+          }}
+          onConfirm={confirmUserAction}
+          loading={deleteLoading}
+          {...getActionModalContent()}
+        />
       </UserManagementContainer>
     </Layout>
   );

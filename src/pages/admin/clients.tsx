@@ -9,6 +9,7 @@ import { Layout } from 'components/ui/Layout';
 import { Button } from 'components/ui/Button';
 import { Input } from 'components/ui/Input';
 import { Card } from 'components/ui/Card';
+import { ConfirmationModal } from 'components/ui/ConfirmationModal';
 import { theme } from 'styles/theme';
 
 const PageContainer = styled.div`
@@ -209,6 +210,13 @@ const ClientsPage: NextPage = () => {
   const [success, setSuccess] = useState('');
   const [showForm, setShowForm] = useState(false);
 
+  // Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<User | null>(null);
+  const [deleteAction, setDeleteAction] = useState<'delete' | 'deactivate' | 'suspend'>('deactivate');
+  const [includeChairs, setIncludeChairs] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   const [formData, setFormData] = useState<ClientForm>({
     name: '',
     email: '',
@@ -325,6 +333,73 @@ const ClientsPage: NextPage = () => {
       setError(err.response?.data?.error || 'Failed to create client');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClientAction = (client: User, action: 'delete' | 'deactivate' | 'suspend') => {
+    setSelectedClient(client);
+    setDeleteAction(action);
+    setIncludeChairs(false);
+    setShowDeleteModal(true);
+  };
+
+  const confirmClientAction = async () => {
+    if (!selectedClient) return;
+
+    setDeleteLoading(true);
+    try {
+      const response = await apiClient.post('/api/admin/delete-client', {
+        clientId: selectedClient.id,
+        action: deleteAction,
+        includeChairs
+      });
+
+      if (response.data.success) {
+        setSuccess(response.data.message);
+        // Refresh the clients list
+        await loadClients();
+        setShowDeleteModal(false);
+        setSelectedClient(null);
+      } else {
+        setError(response.data.error || 'Failed to perform action');
+      }
+    } catch (error: any) {
+      console.error('Error performing client action:', error);
+      setError(error.response?.data?.error || 'Failed to perform action');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const getActionModalContent = () => {
+    if (!selectedClient) return { title: '', message: '', confirmText: '', variant: 'info' as const };
+
+    const chairsMessage = includeChairs ? ' Their chairs will also be affected.' : ' Their chairs will remain active.';
+
+    switch (deleteAction) {
+      case 'delete':
+        return {
+          title: 'Delete Client',
+          message: `Are you sure you want to permanently delete client "${selectedClient.name}"? This action cannot be undone and will only work if the client has no service history or active jobs.${chairsMessage}`,
+          confirmText: 'Delete Permanently',
+          variant: 'danger' as const
+        };
+      case 'deactivate':
+        return {
+          title: 'Deactivate Client',
+          message: `Are you sure you want to deactivate client "${selectedClient.name}"? The client will be marked as inactive but can be reactivated later.${chairsMessage}`,
+          confirmText: 'Deactivate',
+          variant: 'warning' as const
+        };
+      case 'suspend':
+        return {
+          title: 'Suspend Client',
+          message: `Are you sure you want to suspend client "${selectedClient.name}"? The client will be temporarily suspended from accessing the system.${chairsMessage}`,
+          confirmText: 'Suspend Client',
+          variant: 'warning' as const
+        };
+      default:
+        return { title: '', message: '', confirmText: '', variant: 'info' as const };
     }
   };
 
@@ -470,12 +545,75 @@ const ClientsPage: NextPage = () => {
                     >
                       {resetLoading === client.id ? 'Resetting...' : 'Reset Password'}
                     </ActionButton>
+                    <ActionButton
+                      variant="warning"
+                      size="sm"
+                      onClick={() => handleClientAction(client, 'deactivate')}
+                    >
+                      Deactivate
+                    </ActionButton>
+                    <ActionButton
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleClientAction(client, 'suspend')}
+                    >
+                      Suspend
+                    </ActionButton>
+                    <ActionButton
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleClientAction(client, 'delete')}
+                    >
+                      Delete
+                    </ActionButton>
                   </ClientActions>
                 </ClientCard>
               ))}
             </ClientsList>
           )}
         </Card>
+
+        {/* Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setSelectedClient(null);
+          }}
+          onConfirm={confirmClientAction}
+          loading={deleteLoading}
+          {...getActionModalContent()}
+        />
+
+        {/* Additional options for client deletion */}
+        {showDeleteModal && selectedClient && (
+          <div style={{ 
+            position: 'fixed', 
+            bottom: '20px', 
+            right: '20px', 
+            background: theme.colors.background.primary,
+            border: `1px solid ${theme.colors.border.primary}`,
+            borderRadius: theme.borderRadius.lg,
+            padding: theme.spacing.lg,
+            boxShadow: theme.shadows.lg,
+            zIndex: 1001
+          }}>
+            <label style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: theme.spacing.sm,
+              fontSize: theme.typography.fontSize.sm,
+              color: theme.colors.text.primary
+            }}>
+              <input
+                type="checkbox"
+                checked={includeChairs}
+                onChange={(e) => setIncludeChairs(e.target.checked)}
+              />
+              Also affect client's chairs
+            </label>
+          </div>
+        )}
       </PageContainer>
     </Layout>
   );

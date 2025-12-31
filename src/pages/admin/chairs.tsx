@@ -7,9 +7,11 @@ import { Chair } from 'types/chair-care';
 import { Layout } from 'components/ui/Layout';
 import { Button } from 'components/ui/Button';
 import { Card } from 'components/ui/Card';
+import { ConfirmationModal } from 'components/ui/ConfirmationModal';
 import { theme } from 'styles/theme';
 import { collection, query, orderBy, getDocs, where } from 'firebase/firestore';
 import { db } from 'lib/firebase';
+import apiClient from 'lib/api-client';
 
 const ChairsContainer = styled.div`
   max-width: 1200px;
@@ -232,6 +234,12 @@ const ChairsPage: NextPage = () => {
     retired: 0
   });
 
+  // Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedChair, setSelectedChair] = useState<Chair | null>(null);
+  const [deleteAction, setDeleteAction] = useState<'delete' | 'deactivate' | 'retire'>('retire');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   // Redirect if not admin
   useEffect(() => {
     if (user && user.role !== 'admin') {
@@ -305,6 +313,68 @@ const ChairsPage: NextPage = () => {
 
   const formatDate = (date?: Date) => {
     return date ? date.toLocaleDateString('en-ZA') : 'Never';
+  };
+
+  const handleChairAction = (chair: Chair, action: 'delete' | 'deactivate' | 'retire') => {
+    setSelectedChair(chair);
+    setDeleteAction(action);
+    setShowDeleteModal(true);
+  };
+
+  const confirmChairAction = async () => {
+    if (!selectedChair) return;
+
+    setDeleteLoading(true);
+    try {
+      const response = await apiClient.post('/api/admin/delete-chair', {
+        chairId: selectedChair.id,
+        action: deleteAction
+      });
+
+      if (response.data.success) {
+        // Refresh the chairs list
+        await loadChairs();
+        setShowDeleteModal(false);
+        setSelectedChair(null);
+      } else {
+        alert(response.data.error || 'Failed to perform action');
+      }
+    } catch (error: any) {
+      console.error('Error performing chair action:', error);
+      alert(error.response?.data?.error || 'Failed to perform action');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const getActionModalContent = () => {
+    if (!selectedChair) return { title: '', message: '', confirmText: '', variant: 'info' as const };
+
+    switch (deleteAction) {
+      case 'delete':
+        return {
+          title: 'Delete Chair',
+          message: `Are you sure you want to permanently delete chair "${selectedChair.chairId}"? This action cannot be undone and will only work if the chair has no service history.`,
+          confirmText: 'Delete Permanently',
+          variant: 'danger' as const
+        };
+      case 'deactivate':
+        return {
+          title: 'Deactivate Chair',
+          message: `Are you sure you want to deactivate chair "${selectedChair.chairId}"? The chair will be marked as inactive but can be reactivated later.`,
+          confirmText: 'Deactivate',
+          variant: 'warning' as const
+        };
+      case 'retire':
+        return {
+          title: 'Retire Chair',
+          message: `Are you sure you want to retire chair "${selectedChair.chairId}"? The chair will be marked as retired and removed from active service.`,
+          confirmText: 'Retire Chair',
+          variant: 'warning' as const
+        };
+      default:
+        return { title: '', message: '', confirmText: '', variant: 'info' as const };
+    }
   };
 
   if (!user || user.role !== 'admin') {
@@ -433,11 +503,48 @@ const ChairsPage: NextPage = () => {
                   >
                     Print QR
                   </Button>
+                  {chair.status !== 'Retired' && (
+                    <Button
+                      size="sm"
+                      variant="warning"
+                      onClick={() => handleChairAction(chair, 'retire')}
+                    >
+                      Retire
+                    </Button>
+                  )}
+                  {chair.status !== 'Inactive' && chair.status !== 'Retired' && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleChairAction(chair, 'deactivate')}
+                    >
+                      Deactivate
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => handleChairAction(chair, 'delete')}
+                  >
+                    Delete
+                  </Button>
                 </ChairActions>
               </ChairCard>
             ))}
           </ChairsGrid>
         )}
+
+        {/* Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setSelectedChair(null);
+          }}
+          onConfirm={confirmChairAction}
+          loading={deleteLoading}
+          {...getActionModalContent()}
+        />
       </ChairsContainer>
     </Layout>
   );

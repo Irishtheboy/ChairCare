@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { theme } from 'styles/theme';
 
 interface ButtonProps {
-  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'ghost' | 'outline';
+  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'danger' | 'ghost' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
   disabled?: boolean;
@@ -84,6 +84,7 @@ const StyledButton = styled.button<ButtonProps>`
           }
         `;
       case 'error':
+      case 'danger':
         return `
           background: ${theme.colors.error[500]};
           color: ${theme.colors.text.inverse};
