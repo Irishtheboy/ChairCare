@@ -222,7 +222,13 @@ const RequestAccessPage: NextPage = () => {
         <RequestCard theme={theme}>
           <Card.Content>
             <LogoSection theme={theme}>
-              <Logo variant={mode} size="lg" showText={true} />
+              <Logo 
+                variant={mode} 
+                size="lg" 
+                showText={true}
+                customLogo="/images/lightmode.jpeg"
+                customLogoAlt="Chair Care Logo"
+              />
               <Title theme={theme}>Request System Access</Title>
               <Subtitle theme={theme}>
                 Fill out the form below to request access to the Chair Care management system. 

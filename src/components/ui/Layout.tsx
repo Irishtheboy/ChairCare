@@ -369,8 +369,8 @@ export const Layout: React.FC<LayoutProps> = ({
               variant={mode} 
               size="md" 
               showText={true}
-              customLogo={typeof window !== 'undefined' ? localStorage.getItem('customLogo') || undefined : undefined}
-              customLogoAlt="Company Logo"
+              customLogo="/images/lightmode.jpeg"
+              customLogoAlt="Chair Care Logo"
             />
             {user && (
               <UserInfo theme={theme}>

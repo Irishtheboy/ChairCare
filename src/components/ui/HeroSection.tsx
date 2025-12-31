@@ -301,7 +301,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         
         <DecorativeSection theme={theme}>
           <LogoSection theme={theme}>
-            <Logo variant={mode} size="lg" showText={true} />
+            <Logo 
+              variant={mode} 
+              size="lg" 
+              showText={true}
+              customLogo="/images/lightmode.jpeg"
+              customLogoAlt="Chair Care Logo"
+            />
           </LogoSection>
           
           {showDecorative && (

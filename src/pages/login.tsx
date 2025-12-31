@@ -100,6 +100,10 @@ const LoginCard = styled(Card)<{ theme: any }>`
 const LogoSection = styled.div<{ theme: any }>`
   margin-bottom: ${props => props.theme.spacing['2xl']};
   padding: ${props => props.theme.spacing.xl} 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 `;
 
 const WelcomeText = styled.div<{ theme: any }>`
@@ -139,97 +143,6 @@ const SuccessMessage = styled.div<{ theme: any }>`
   margin-bottom: ${props => props.theme.spacing.lg};
 `;
 
-const DemoSection = styled.div<{ theme: any }>`
-  margin-top: ${props => props.theme.spacing['2xl']};
-  padding: ${props => props.theme.spacing.xl};
-  background: ${props => props.theme.mode === 'dark' 
-    ? 'rgba(255, 255, 255, 0.05)' 
-    : props.theme.colors.gray[50]
-  };
-  border-radius: ${props => props.theme.borderRadius.xl};
-  border: 1px solid ${props => props.theme.colors.border.primary};
-`;
-
-const DemoTitle = styled.h4<{ theme: any }>`
-  margin: 0 0 ${props => props.theme.spacing.md} 0;
-  color: ${props => props.theme.colors.text.primary};
-  font-size: ${props => props.theme.typography.fontSize.lg};
-  font-weight: ${props => props.theme.typography.fontWeight.semibold};
-`;
-
-const DemoGrid = styled.div<{ theme: any }>`
-  display: grid;
-  gap: ${props => props.theme.spacing.md};
-`;
-
-const DemoCredential = styled.div<{ theme: any }>`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: ${props => props.theme.spacing.md};
-  background: ${props => props.theme.colors.background.primary};
-  border-radius: ${props => props.theme.borderRadius.md};
-  border: 1px solid ${props => props.theme.colors.border.primary};
-`;
-
-const DemoLabel = styled.div<{ theme: any }>`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  flex: 1;
-`;
-
-const DemoRole = styled.span<{ theme: any }>`
-  font-weight: ${props => props.theme.typography.fontWeight.semibold};
-  color: ${props => props.theme.colors.text.primary};
-  font-size: ${props => props.theme.typography.fontSize.sm};
-`;
-
-const DemoEmail = styled.span<{ theme: any }>`
-  font-size: ${props => props.theme.typography.fontSize.xs};
-  color: ${props => props.theme.colors.text.secondary};
-  margin-top: 2px;
-`;
-
-const DemoButton = styled.button<{ theme: any }>`
-  background: ${props => props.theme.gradients.primary};
-  color: white;
-  border: none;
-  padding: ${props => props.theme.spacing.sm} ${props => props.theme.spacing.lg};
-  border-radius: ${props => props.theme.borderRadius.full};
-  font-size: ${props => props.theme.typography.fontSize.sm};
-  font-weight: ${props => props.theme.typography.fontWeight.semibold};
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: ${props => props.theme.shadows.professional};
-  position: relative;
-  overflow: hidden;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: ${props => props.theme.shadows.professionalHover};
-  }
-  
-  &:active {
-    transform: translateY(0);
-  }
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
-  }
-  
-  &:hover::before {
-    left: 100%;
-  }
-`;
-
 const AccessSection = styled.div<{ theme: any }>`
   text-align: center;
   margin-top: ${props => props.theme.spacing.lg};
@@ -241,24 +154,6 @@ const AccessText = styled.p<{ theme: any }>`
   margin: 0 0 ${props => props.theme.spacing.md} 0;
   color: ${props => props.theme.colors.text.secondary};
   font-size: ${props => props.theme.typography.fontSize.sm};
-`;
-
-const SecurityNote = styled.div<{ theme: any }>`
-  margin-top: ${props => props.theme.spacing.lg};
-  padding: ${props => props.theme.spacing.md};
-  background: ${props => props.theme.mode === 'dark' 
-    ? 'rgba(59, 130, 246, 0.1)' 
-    : props.theme.colors.primary[50]
-  };
-  border-radius: ${props => props.theme.borderRadius.md};
-  border: 1px solid ${props => props.theme.colors.primary[200]};
-`;
-
-const SecurityText = styled.p<{ theme: any }>`
-  margin: 0;
-  font-size: ${props => props.theme.typography.fontSize.xs};
-  color: ${props => props.theme.colors.primary[700]};
-  line-height: ${props => props.theme.typography.lineHeight.relaxed};
 `;
 
 const LoginPage: NextPage = () => {
@@ -305,26 +200,6 @@ const LoginPage: NextPage = () => {
     }
   };
 
-  const fillDemoCredentials = (role: 'admin' | 'client' | 'technician') => {
-    setError('');
-    setSuccess('');
-    
-    switch (role) {
-      case 'admin':
-        setEmail('admin@chaircare.co.za');
-        setPassword('ChairCare2024!');
-        break;
-      case 'client':
-        setEmail('client@company.co.za');
-        setPassword('ClientDemo20244444!');
-        break;
-      case 'technician':
-        setEmail('tech@chaircare.co.za');
-        setPassword('TechDemo2024!');
-        break;
-    }
-  };
-
   return (
     <>
       <Head>
@@ -340,7 +215,13 @@ const LoginPage: NextPage = () => {
         <LoginCard theme={theme}>
           <Card.Content>
             <LogoSection theme={theme}>
-              <Logo variant={mode} size="lg" showText={true} />
+              <Logo 
+                variant={mode} 
+                size="lg" 
+                showText={true}
+                customLogo="/images/lightmode.jpeg"
+                customLogoAlt="Chair Care Logo"
+              />
               <WelcomeText theme={theme}>
                 Welcome back! Please sign in to access your account.
               </WelcomeText>
@@ -383,68 +264,18 @@ const LoginPage: NextPage = () => {
             {error && <ErrorMessage theme={theme}>{error}</ErrorMessage>}
             {success && <SuccessMessage theme={theme}>{success}</SuccessMessage>}
             
-            <DemoSection theme={theme}>
-              <DemoTitle theme={theme}>Demo Accounts</DemoTitle>
-              <p style={{ 
-                margin: `0 0 ${theme.spacing.lg} 0`,
-                fontSize: theme.typography.fontSize.sm,
-                color: theme.colors.text.secondary
-              }}>
-                Try the application with these demo accounts:
-              </p>
-              
-              <DemoGrid theme={theme}>
-                <DemoCredential theme={theme}>
-                  <DemoLabel theme={theme}>
-                    <DemoRole theme={theme}>👑 Administrator</DemoRole>
-                    <DemoEmail theme={theme}>admin@chaircare.co.za</DemoEmail>
-                  </DemoLabel>
-                  <DemoButton theme={theme} onClick={() => fillDemoCredentials('admin')}>
-                    Use Admin
-                  </DemoButton>
-                </DemoCredential>
-                
-                <DemoCredential theme={theme}>
-                  <DemoLabel theme={theme}>
-                    <DemoRole theme={theme}>🏢 Client</DemoRole>
-                    <DemoEmail theme={theme}>client@company.co.za</DemoEmail>
-                  </DemoLabel>
-                  <DemoButton theme={theme} onClick={() => fillDemoCredentials('client')}>
-                    Use Client
-                  </DemoButton>
-                </DemoCredential>
-                
-                <DemoCredential theme={theme}>
-                  <DemoLabel theme={theme}>
-                    <DemoRole theme={theme}>🔧 Technician</DemoRole>
-                    <DemoEmail theme={theme}>tech@chaircare.co.za</DemoEmail>
-                  </DemoLabel>
-                  <DemoButton theme={theme} onClick={() => fillDemoCredentials('technician')}>
-                    Use Technician
-                  </DemoButton>
-                </DemoCredential>
-              </DemoGrid>
-              
-              <AccessSection theme={theme}>
-                <AccessText theme={theme}>
-                  Need access to the system?
-                </AccessText>
-                <Button
-                  variant="outline"
-                  onClick={() => router.push('/request-access')}
-                  fullWidth
-                >
-                  Request Access
-                </Button>
-              </AccessSection>
-              
-              <SecurityNote theme={theme}>
-                <SecurityText theme={theme}>
-                  🔒 Your data is protected with enterprise-grade security. 
-                  All communications are encrypted and your privacy is our priority.
-                </SecurityText>
-              </SecurityNote>
-            </DemoSection>
+            <AccessSection theme={theme}>
+              <AccessText theme={theme}>
+                Need access to the system?
+              </AccessText>
+              <Button
+                variant="outline"
+                onClick={() => router.push('/request-access')}
+                fullWidth
+              >
+                Request Access
+              </Button>
+            </AccessSection>
           </Card.Content>
         </LoginCard>
       </LoginContent>

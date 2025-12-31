@@ -8,12 +8,14 @@ interface LogoProps {
   showText?: boolean;
   className?: string;
   customLogo?: string; // Path to custom logo image
+  customLogoDark?: string; // Path to custom logo for dark mode
   customLogoAlt?: string; // Alt text for custom logo
 }
 
 const LogoContainer = styled.div<{ size: string }>`
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: ${props => {
     switch (props.size) {
       case 'sm': return theme.spacing.sm;
@@ -23,7 +25,7 @@ const LogoContainer = styled.div<{ size: string }>`
   }};
 `;
 
-const LogoIcon = styled.div<{ size: string; variant: string }>`
+const LogoIcon = styled.div<{ size: string; variant: string; hasCustomLogo?: boolean }>`
   width: ${props => {
     switch (props.size) {
       case 'sm': return '32px';
@@ -38,22 +40,24 @@ const LogoIcon = styled.div<{ size: string; variant: string }>`
       default: return '40px';
     }
   }};
-  border-radius: ${theme.borderRadius.lg};
+  border-radius: ${props => props.hasCustomLogo ? '0' : theme.borderRadius.lg};
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
   
-  background: ${props => props.variant === 'dark' 
-    ? 'linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%)'
-    : 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0369a1 100%)'
-  };
+  background: ${props => props.hasCustomLogo ? 'transparent' : (
+    props.variant === 'dark' 
+      ? 'linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%)'
+      : 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0369a1 100%)'
+  )};
   
-  box-shadow: ${props => props.variant === 'dark'
-    ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-    : '0 4px 12px rgba(14, 165, 233, 0.3)'
-  };
+  box-shadow: ${props => props.hasCustomLogo ? 'none' : (
+    props.variant === 'dark'
+      ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+      : '0 4px 12px rgba(14, 165, 233, 0.3)'
+  )};
   
   &::before {
     content: '';
@@ -62,32 +66,39 @@ const LogoIcon = styled.div<{ size: string; variant: string }>`
     left: 0;
     right: 0;
     bottom: 0;
-    background: ${props => props.variant === 'dark'
-      ? 'linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%)'
-      : 'linear-gradient(45deg, rgba(255,255,255,0.2) 0%, transparent 50%)'
-    };
+    background: ${props => props.hasCustomLogo ? 'transparent' : (
+      props.variant === 'dark'
+        ? 'linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%)'
+        : 'linear-gradient(45deg, rgba(255,255,255,0.2) 0%, transparent 50%)'
+    )};
   }
 `;
 
-const CustomLogoImage = styled.img<{ size: string }>`
+const CustomLogoImage = styled.img<{ size: string; variant: string }>`
   width: ${props => {
     switch (props.size) {
-      case 'sm': return '28px';
-      case 'lg': return '44px';
-      default: return '36px';
+      case 'sm': return '32px';
+      case 'lg': return '48px';
+      default: return '40px';
     }
   }};
   height: ${props => {
     switch (props.size) {
-      case 'sm': return '28px';
-      case 'lg': return '44px';
-      default: return '36px';
+      case 'sm': return '32px';
+      case 'lg': return '48px';
+      default: return '40px';
     }
   }};
   object-fit: contain;
   position: relative;
   z-index: 1;
-  border-radius: ${theme.borderRadius.sm};
+  
+  /* Improve visibility in dark mode */
+  filter: ${props => props.variant === 'dark' 
+    ? 'brightness(1.1) contrast(1.05) drop-shadow(0 0 8px rgba(255,255,255,0.1))' 
+    : 'none'
+  };
+  transition: filter 0.3s ease;
 `;
 
 const ChairSVG = styled.svg<{ size: string; variant: string }>`
@@ -150,16 +161,21 @@ export const Logo: React.FC<LogoProps> = ({
   showText = true,
   className,
   customLogo,
+  customLogoDark,
   customLogoAlt = 'Logo'
 }) => {
+  // Choose the appropriate logo based on theme
+  const logoSrc = variant === 'dark' && customLogoDark ? customLogoDark : customLogo;
+  
   return (
     <LogoContainer size={size} className={className}>
-      <LogoIcon size={size} variant={variant}>
-        {customLogo ? (
+      <LogoIcon size={size} variant={variant} hasCustomLogo={!!logoSrc}>
+        {logoSrc ? (
           <CustomLogoImage 
-            src={customLogo} 
+            src={logoSrc} 
             alt={customLogoAlt}
             size={size}
+            variant={variant}
             onError={(e) => {
               console.warn('Custom logo failed to load, falling back to default');
               // Hide the image and show default icon
